@@ -5,7 +5,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 begin
 ;************************************
 
-      wks      = gsn_open_wks("png","TCNAME_YYYYMMDDHH_track")   ; open workstation
+      wks      = gsn_open_wks("png","TCNAMEYEAR_YYYYMMDDHH_track")   ; open workstation
 
 
 ; DRAW lengend and track separately Don't worry sequence
@@ -101,7 +101,7 @@ begin
    res@tmXBMajorOutwardLengthF = 0.
 
    res@tiMainFontHeightF = 0.03
-   res@tiMainString      = "TCNAME (2020) init YYYYMMDDHH"  ; title
+   res@tiMainString      = "TCNAME (YEAR) init YYYYMMDDHH"  ; title
    map = gsn_csm_map_ce(wks,res)                  ; create map
 
 ; ########################## Legend ###########################################

@@ -84,7 +84,7 @@ lines.close()
 #fig, (ax1, ax2) = plt.subplots(2)
 fig, (ax1) = plt.subplots(1)
 
-fig.suptitle("Hurricane TCNAME (2020) Central Pressure")
+fig.suptitle("Hurricane TCNAME (YEAR) Central Pressure")
 
 ax1.plot(hrnhc,pnhc,color='black',linestyle='solid',label='NHC BEST')
 #ax1.plot(hra,pa,color='red',linestyle='solid',label='MOM6 SST_ana')
@@ -104,7 +104,7 @@ ax1.legend(loc='best')
 #end_day=datetime.datetime.strptime(str(end_date),"%Y-%m-%d").strftime("%m/%d/%Y")
 ax1.set(xlabel='Forecast hours init: '+yyyymmddhh)
 ax1.set(Ylabel='Pmin(hPa)')
-fig.savefig('TCNAME_YYYYMMDDHH_Pmin.png', dpi = 300)
+fig.savefig('TCNAMEYEAR_YYYYMMDDHH_Pmin.png', dpi = 300)
 
 sys.exit()
 
