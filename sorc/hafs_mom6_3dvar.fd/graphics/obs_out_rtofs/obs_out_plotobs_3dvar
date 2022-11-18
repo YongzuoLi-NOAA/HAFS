@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+
+# screen issue 
+import matplotlib
+matplotlib.use('Agg')
+
+from netCDF4 import Dataset, num2date, date2num
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.stats as stats
+import cartopy.crs as ccrs
+import cartopy
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+import os
+import yaml
+from matplotlib import cm
+import re
+import glob
+
+from warnings import filterwarnings
+filterwarnings(action='ignore', category=DeprecationWarning, message='`np.bool` is a deprecated alias')
+
+if __name__ == '__main__':
+    description = """ Ex: soca_plotobs -f sst_amsr2.20201007.nc -b 0.0 1.0 -c jet
+                                       -v sea_surface_temperature -g ObsError
+                  """
+    # Command line argument
+    parser = ArgumentParser(
+        description=description,
+        formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        '-f',
+        '--files',
+        type=str, nargs='+',required=True)
+    parser.add_argument(
+        '-v',
+        '--variable',
+        help="ioda obs name (sea_surface_temperature, sea_surface_salinity, ...)",
+        type=str, required=True)
+    parser.add_argument(
+        '-g',
+        '--group',
+        help="ioda groups [ObsError, ombg, oman, ObsValue, ...]",
+        type=str, required=True)
+    parser.add_argument(
+        '-d',
+        '--domain',
+        help="global, hat10, north, south",
+        type=str, default='global')
+    parser.add_argument(
+        '-s',
+        '--save',
+        help="filename.png",
+        type=str, default='none')
+    parser.add_argument(
+        '-b',
+        '--bounds',
+        help="min, max",
+        type=str, nargs='+',required=True)
+    parser.add_argument(
+        '-c',
+        '--colormap',
+        help="jet, bwr, RdBu, ...",
+        type=str, default='spring')
+    parser.add_argument(
+        '-t',
+        '--title',
+        help="title for the figure",
+        type=str, default=' ')
+
+    args = parser.parse_args()
+
+    var=[]
+    lon=[]
+    lat=[]
+    qc=[]
+    for fname in args.files:
+        print(fname)
+        ncfile = Dataset(fname,'r')
+        metadata_grp=ncfile.groups['MetaData']
+        var_grp=ncfile.groups[args.group]
+        try:
+            qc_grp=ncfile.groups['EffectiveQC0']
+        except:
+            print('EffectiveQC0')
+        lon_tmp=np.squeeze(metadata_grp.variables['longitude'][:])
+        lat_tmp=np.squeeze(metadata_grp.variables['latitude'][:])
+        qc_tmp=np.squeeze(qc_grp.variables[args.variable][:])
+        var_tmp=np.squeeze(var_grp.variables[args.variable][:])
+        ncfile.close()
+
+        lon=np.append(lon, lon_tmp)
+        lat=np.append(lat, lat_tmp)
+        var=np.append(var, var_tmp)
+        qc=np.append(qc, qc_tmp)
+
+    plt.figure(figsize=(8, 6))
+
+    I=np.where(qc==0)
+    Iq=np.where(qc>0)
+
+    if ( args.domain == 'global' ):
+        proj=ccrs.Robinson()
+        lonmin=-180
+        lonmax=180
+        latmin=-90
+        latmax=90
+    if ( args.domain == 'hat10' ):
+        proj=ccrs.Robinson()
+        lonmin=-100
+        lonmax=10
+        latmin=-5
+        latmax=50
+    if ( args.domain == 'north' ):
+        proj=ccrs.NorthPolarStereo()
+        lonmin=-180
+        lonmax=180
+        latmin=50
+        latmax=90
+    if ( args.domain == 'south' ):
+        proj=ccrs.SouthPolarStereo()
+        lonmin=-180
+        lonmax=180
+        latmin=-90
+        latmax=-50
+
+    ax = plt.axes(projection=proj)
+
+    obsax= plt.scatter(
+        lon[I],
+        lat[I],
+        c=var[I],
+        s=.05,
+        cmap=args.colormap,
+        transform=ccrs.PlateCarree(),
+        vmin=args.bounds[0], vmax=args.bounds[1])
+    #plt.scatter(lon[Iq],lat[Iq],
+    #    color='black',
+    #    s=.05,
+    #    transform=ccrs.PlateCarree())
+
+    ax.add_feature(cartopy.feature.LAND, edgecolor='black')
+    ax.add_feature(cartopy.feature.LAKES, edgecolor='black')
+    ax.coastlines()
+    ax.set_extent([lonmin, lonmax, latmin, latmax], ccrs.PlateCarree())
+    plt.colorbar(obsax, shrink=0.5).set_label(args.group)
+    plt.title(args.title)
+    if ( args.save == 'none' ): plt.show()
+    if ( args.save != 'none' ): plt.savefig(args.save)

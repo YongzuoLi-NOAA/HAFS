@@ -195,7 +195,7 @@ if __name__ == '__main__':
         ax.coastlines()
 
         #cc = plt.contour(grid.lon, grid.lat, var/grid.mask, levels=np.arange(18, 34,2),extend='both', cmap=args.color)
-        #plt.clabel(cs, fontsize=9, inline=True)
+        ax.clabel(cs, [28,30],fontsize=8, colors='green',fmt='%2d', inline=True)
         cb = plt.colorbar(cs, orientation='horizontal')
         #cb = plt.colorbar(cs, orientation='vertical')
 
@@ -212,8 +212,8 @@ if __name__ == '__main__':
              print("Depth ",depthf)
              #sys.exit()
 
-             plt.title(args.exp+' '+args.variable+' Depth='+str(depthf)+'m '+yyyymmdd)
-             pngname=args.exp+'.'+args.variable+'.Depth'+str(depthf)+'m.'+yyyymmdd+'.png'
+             plt.title(args.exp+' '+args.variable+' '+str(depthf)+'m '+yyyymmdd)
+             pngname=args.exp+'.'+args.variable+'.'+str(depthf)+'m.'+yyyymmdd+'.png'
 
         # read text lat/lon
         lats=[]

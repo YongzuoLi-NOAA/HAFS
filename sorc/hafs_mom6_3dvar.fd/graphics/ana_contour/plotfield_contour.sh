@@ -3,21 +3,16 @@
 python_dir=/work/noaa/ng-godas/yli/plot112
 grid_dir=/work/noaa/ng-godas/yli/plot112
 
-START_YMDH=20201025Z12
-END_YMDH=2020102606
+START_YMDH=2022092412
+  END_YMDH=2022092518
 DH=6
 ab=ana
 
-tmp_YMDH=$(date -ud "$START_YMDH")
+tmp_YMDH=$(date -ud "${START_YMDH:0:8}Z${START_YMDH:8:2}")
 YMDH=$(date -ud "$tmp_YMDH " +%Y%m%d%H )
 echo $YMDH
 
-#cycle_dir=/work/noaa/stmp/yli/Ian2022_3dvar/
-cycle_dir=/work/noaa/stmp/yli/Zeta_3dvar/
-#cycle_dir=/work/noaa/stmp/yli/Zeta2020_3dvar/${YMDH}
-#cycle_dir=/work/noaa/stmp/yli/Laura2020_3dvar/2020082112
-#cycle_dir=/work/noaa/stmp/yli/Epislon2020_3dvar/${YMDH}
-#cycle_dir=/work/noaa/stmp/yli/Epislon_3dvar
+cycle_dir=/work/noaa/stmp/yli/Ian2022_3dvar/${START_YMDH}
 
 function prepsurfyaml {
 cat <<EOF
@@ -31,9 +26,11 @@ latitude: 0.0
 color: seismic # Spectral #jet 
 aggregate: False
 projection: 'hat10'
-experiment: 'badZeta2020.3DVAR.ana'
+experiment: '${START_YMDH:6:4}.Ian2022.3DVAR.ana'
 EOF
 }
+
+#exit
 
 for LEVEL in 0; do 
 
@@ -41,11 +38,9 @@ while [ "$YMDH" -le "$END_YMDH" ]; do
 
 echo $YMDH
 
-#cat Ian2022_latlon.txt |grep ${YMDH} > latlon.txt
-#cat Epislon2020_latlon.txt |grep ${YMDH} > latlon.txt
-cat Zeta2020_latlon.txt |grep ${YMDH} > latlon.txt
+cat Ian2022_latlon.txt |grep ${YMDH} > latlon.txt
+#cat Zeta2020_latlon.txt |grep ${YMDH} > latlon.txt
 #cat Laura2020_latlon.txt |grep ${YMDH} > latlon.txt
-#cat latlon.txt
 
 inputnc=ocn.${ab}.${YMDH}.nc
 
@@ -88,7 +83,7 @@ DH=$(($DH+6))
 done  # day loop
 
 done  # level loop
-exit
+#exit
 
 mkdir NC
 mkdir PNG

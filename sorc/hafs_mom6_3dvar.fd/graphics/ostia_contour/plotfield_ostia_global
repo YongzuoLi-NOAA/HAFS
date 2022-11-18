@@ -198,8 +198,9 @@ if __name__ == '__main__':
         ax.add_feature(cartopy.feature.LAKES, edgecolor='black')
         ax.coastlines()
 
-        #cc = plt.contour(grid.lon, grid.lat, var/grid.mask, levels=np.arange(18, 34,2),extend='both', cmap=args.color)
-        #plt.clabel(cs, fontsize=9, inline=True)
+        #cc = ax.contour(grid.lon, grid.lat, var/grid.mask, levels=np.arange(18, 35,2),extend='both', cmap=args.color,transform=ccrs.PlateCarree())
+        ax.clabel(cs, [28,30],fontsize=8, colors='green',fmt='%2d', inline=True)
+
         cb = plt.colorbar(cs, orientation='horizontal')
 
         # Yongzuo title & png name
