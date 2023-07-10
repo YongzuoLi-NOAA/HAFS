@@ -1,1 +1,0 @@
-/work/noaa/marine/yli/HAFS/sorc/hafs_mom6_3dvar.fd/soca-science//scripts/workflow/cycle.sh

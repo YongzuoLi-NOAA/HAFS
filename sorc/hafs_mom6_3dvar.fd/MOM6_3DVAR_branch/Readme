@@ -1,0 +1,53 @@
+
+I have created a HFSA-MOM6 based 3DVAR workflow. Please test it at your convenience 
+(10 minutes to copy and run).
+
+(1) cd /work2/noaa/hwrf/save/yongzuo
+
+(2) cp -r MOM6_3DVAR (your path)/.
+
+(3) In parm/exp.config, change JOB_ACCT=marine-cpu
+
+(4) In crontab/cronjob_mom6_3dvar.sh, change HOME3DVAR and WORK3DVAR to your paths
+
+(5) cd crontab
+
+(6) ./cronjob_mom6_3dvar.sh
+
+########################################
+(a) cd /work2/noaa/hwrf/save/yongzuo
+(b) cp -r MOM6_3DVAR_branch (your path)/MOM6_3DVAR
+(c) cd MOM6_3DVAR/crontab
+(d) In install_link.sh, change HOME3DVAR to your paths 
+(e) ./install_link.sh
+(f) perform (3) (4) (5) (6)
+########################################
+
+Example tested by user:
+/work/noaa/aoml-hafsda/xlu/JEDI_Marine/MOM6_HAFS
+/work/noaa/aoml-hafsda/xlu/JEDI_Marine/MOM6_run
+
+Orion-login-3[194] yongzuo$ tree
+.
+├── crontab
+│   ├── clean_link.sh
+│   ├── cronjob_mom6_3dvar.log
+│   ├── cronjob_mom6_3dvar.sh
+│   └── install_link.sh
+├── exec
+├── fix
+├── obs
+├── parm
+│   └── exp.config
+├── Readme
+└── scripts
+    ├── post.obs.sh
+    ├── post.state.sh
+    ├── prep.bkgrst.sh
+    ├── prep.obs.sh
+    ├── prep.soca.sh
+    ├── run_step.sh
+    ├── run.var.sh
+    └── wm.slurm.sh
+
+

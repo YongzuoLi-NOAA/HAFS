@@ -1,1 +1,0 @@
-/work/noaa/marine/yli/GFSatm_FORC/2020/20201025/atm_2020102500.nc
