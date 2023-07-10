@@ -1,0 +1,12 @@
+
+gen_obc_from_RTOFS.sh  # Generate obc files
+
+gen_obc_from_RTOFS.py  
+get_cycle.py                  
+
+ncdf3z_rtofs_SSH_hat10_OBC.in
+ncdf3z_rtofs_3d_hat10_OBC.in  
+
+ncrcat_2obc_files.sh # concatenate 2 obc files into 1
+
+
