@@ -2,8 +2,8 @@
 ##set -x
 ##date
 
-export HOME3DVAR=/work2/noaa/hwrf/save/yongzuo/MOM6_3DVAR
-export WORK3DVAR=/work2/noaa/hwrf/scrub/yongzuo/MOM6_3DVAR
+export HOME3DVAR=/work2/noaa/hwrf/save/yongzuo/MOM6_3DVAR_v1
+export WORK3DVAR=/work2/noaa/hwrf/scrub/yongzuo/MOM6_3DVAR_v1
 
 TCID=09L
 INIT=2022092312
@@ -30,13 +30,13 @@ mkdir -p ${SCRATCH_DIR_CYCLE}
 cd ${HOME3DVAR}/crontab
 
 # (1) Link static
- ${SCRIPTS_DIR}/prep.soca.sh > ${LOG_DIR_CYCLE}/prep.soca
+## ${SCRIPTS_DIR}/prep.soca.sh > ${LOG_DIR_CYCLE}/prep.soca
 
-# (2) Link Obs
+# (2) Link bkg rst MOM_res.nc 
+## ${SCRIPTS_DIR}/prep.bkgrst.sh ${YMDH} ${INIT} ${TCID} > ${LOG_DIR_CYCLE}/prep.bkgrst
+
+# (3) Link Obs
  ${SCRIPTS_DIR}/prep.obs.sh > ${LOG_DIR_CYCLE}/prep.obs
-
-# (3) Link bkg rst MOM_res.nc 
- ${SCRIPTS_DIR}/prep.bkgrst.sh ${YMDH} ${INIT} ${TCID} > ${LOG_DIR_CYCLE}/prep.bkgrst
 
 # (4) 3DVAR
 export SOCA_SCIENCE_DIR=/work2/noaa/marine/yli/JEDI/jedi-20230316/soca-science
@@ -46,14 +46,22 @@ source ${HOME3DVAR}/parm/exp.config
 rm -rf   ${WORK3DVAR}/SCRATCH/${YMDH}/run.var
 mkdir -p ${WORK3DVAR}/SCRATCH/${YMDH}/run.var
 
-# load the workload manager settings
-## . $SOCA_SCIENCE_DIR/scripts/workflow/workload_manager/wm.${WORKLOAD_MANAGER}.sh
+# submit this script via SLURM
+opt=""
+JOB_OPTS=${JOB_OPTS:-" "}
+JOB_QOS=${JOB_QOS:-" "}
+JOB_PARTITION=${JOB_PARTITION:-" "}
+JOB_NPES=${JOB_NPES:-" "}
 
-. ${SCRIPTS_DIR}/wm.slurm.sh
-wm_init
+[[ "$JOB_OPTS" != " " ]] && opt="$opt $JOB_OPTS"
+[[ "$JOB_QOS" != " " ]] && opt="$opt --qos=$JOB_QOS"
+[[ "$JOB_PARTITION" != " " ]] && opt="$opt --partition=$JOB_PARTITION"
+[[ "$JOB_NPES" != " " ]] && opt="$opt --ntasks=$JOB_NPES"
+echo /opt/slurm/bin/sbatch $opt --time=$JOB_TIME -A $JOB_ACCT -J $JOB_NAME \
+     -o ${LOG_DIR_CYCLE}/run.var $SCRIPTS_DIR/run.var.sh
 
-## 3dvar finished by wm_init (?)
-## . ${SCRIPTS_DIR}/run_step.sh
-##  run_step run.var
+/opt/slurm/bin/sbatch $opt --time=$JOB_TIME -A $JOB_ACCT -J $JOB_NAME \
+   -o ${LOG_DIR_CYCLE}/run.var $SCRIPTS_DIR/run.var.sh
 
 exit
+
