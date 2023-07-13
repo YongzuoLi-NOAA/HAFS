@@ -19,22 +19,24 @@ cat << EOF
 
 EOF
 
-TCID=$3
-INIT=$2
-YMDH=$1
-echo prep.bkgrst ${YMDH}
+# TCID=$3
+# INIT=$2
+# YMDH=$1
+# echo prep.bkgrst ${YMDH}
 
-ymdx=$(date -ud "$ANA_DATE" +%Y%m%d )
-ymdhx=$(date -ud "$ANA_DATE" +%Y%m%d%H )
+INIT=$(date -ud "$BKG_INIT_DATE" +%Y%m%d%H )
+YMDH=$(date -ud "$ANA_DATE" +%Y%m%d%H )
 
-echo $ymdx $ymdhx
+echo $TCID $INIT $YMDH
 
+HAFS_hfsa_mom6=${WORKhafshome}/${INIT}/${TCID}/forecast/RESTART
 BKGRST_DIR=${WORK3DVAR}/rst/${YMDH}/ctrl
 
 # 1) Does a background already exist? If so exit early
 if [[ -d "$BKGRST_DIR"  &&  $(ls $BKGRST_DIR/*.nc -1q 2>/dev/null | wc -l) -gt 0 ]]; then
     echo "Background already exists."
     echo " $BKGRST_DIR"
+    echo "done with prep.bkgrst"
     exit 0
 fi
 
@@ -44,4 +46,6 @@ mkdir -p ${BKGRST_DIR}
 
 ln -s ${HAFS_hfsa_mom6}/${YMDH:0:8}.${YMDH:8:2}0000.MOM.res_1.nc ${BKGRST_DIR}/MOM.res_1.nc
 ln -s ${HAFS_hfsa_mom6}/${YMDH:0:8}.${YMDH:8:2}0000.MOM.res.nc ${BKGRST_DIR}/MOM.res.nc
+
+echo "done with prep.bkgrst"
 

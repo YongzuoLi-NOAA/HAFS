@@ -39,20 +39,15 @@ function socaincr2mom6 {
   mv inc.nc $incr_out
 }
 
-## YMDH=2022092412
-
 YMDH=$(date -ud "$ANA_DATE" +%Y%m%d%H)
-echo YONGZUO ${YMDH}
+echo ${YMDH}
 
 EXP_START_DATE=${YMDH:0:8}Z${YMDH:8:2}
 CYCLE_START_DATE=$(date -ud "$EXP_START_DATE")
 export ANA_DATE=$(date -ud "$CYCLE_START_DATE")
-echo Yongzuo $ANA_DATE 
-
-# make sure required env vars exist
+echo $ANA_DATE 
 
 source ${HOME3DVAR}/parm/exp.config
-##source ${HOME3DVAR}/parm/machine.orion.gnu
 
 export SOCA_STATIC_DIR=${HOME3DVAR}/fix/static
 export SOCA_SCIENCE_BIN_DIR=${HOME3DVAR}/exec
@@ -78,6 +73,7 @@ BKGRST_DIR=${WORK3DVAR}/rst/${YMDH}/ctrl
 if [[ -d "$ANARST_DIR" && $(ls $ANARST_DIR -1q | wc -l) -gt 0 ]]; then
   echo "VAR analysis has already been created at :"
   echo "  $ANARST_DIR"
+  echo "done with VAR"
   exit 0
 fi
 
@@ -96,8 +92,6 @@ esac
 echo "ENTER run.var"
 cd ${WORK_DIR}
 pwd
-
-# TODO move this to a common function
 
 ln -sf $SOCA_BIN_DIR/soca_{var,checkpoint_model,dirac}.x .
 ln -sf $SOCA_SCIENCE_BIN_DIR/soca_var2dirac.x .
@@ -119,8 +113,6 @@ mkdir -p INPUT
 (cd INPUT && ln -sf $MODEL_DATA_DIR/* .)
 ln -s $SOCA_STATIC_DIR/* .
 
-# prepare 3dvar configuration file
-# TODO, move this to a general script? it is duplicated in the letkf
 (( DA_WINDOW_HW=FCST_LEN/2 ))
 DA_WINDOW_START=$(date -ud "$ANA_DATE - $DA_WINDOW_HW hours" +"%Y-%m-%dT%H:%M:%SZ")
 DA_ANA_DATE=$(date -ud "$ANA_DATE" +"%Y-%m-%dT%H:%M:%SZ")
@@ -191,6 +183,7 @@ $MPIRUN ./soca_var.x var.yaml
 
 # diagnose the B-matrix
 if [[ "$DA_DIAGB_ENABLED" == [yYtT1] ]]; then
+
    for v in SSH T S ; do
      # create yaml file for dirac
      ./soca_var2dirac.x -v $v -o dirac.yaml \
@@ -203,14 +196,17 @@ if [[ "$DA_DIAGB_ENABLED" == [yYtT1] ]]; then
      # apply B to diracs
      $MPIRUN ./soca_dirac.x dirac.yaml
   done
+
   # move files related to B
   mkdir -p $DIAGB_TMP_DIR
   shopt -s nullglob # enable nullglob
+
   for f in Data/*.{loc,dirac}*.nc
   do
     echo $f
     mv $f $DIAGB_TMP_DIR
   done
+
   shopt -u nullglob # disable nullglob
 
 fi
@@ -255,3 +251,4 @@ mkdir -p $OBS_OUT_CTRL_DIR
 mv obs_out/* $OBS_OUT_CTRL_DIR
 
 echo "done with VAR"
+

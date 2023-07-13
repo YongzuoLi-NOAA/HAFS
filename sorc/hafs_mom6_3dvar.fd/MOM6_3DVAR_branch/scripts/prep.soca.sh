@@ -29,5 +29,5 @@ else
     ln -s ${HOME3DVAR}/fix/static/* ${SOCA_STATIC_DIR}/.
 fi
 
-echo "DONE"
+echo "done with prep.soca"
 
