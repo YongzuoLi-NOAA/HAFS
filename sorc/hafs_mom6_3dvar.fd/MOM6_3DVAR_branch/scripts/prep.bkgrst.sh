@@ -19,17 +19,10 @@ cat << EOF
 
 EOF
 
-# TCID=$3
-# INIT=$2
-# YMDH=$1
-# echo prep.bkgrst ${YMDH}
-
-INIT=$(date -ud "$BKG_INIT_DATE" +%Y%m%d%H )
 YMDH=$(date -ud "$ANA_DATE" +%Y%m%d%H )
 
-echo $TCID $INIT $YMDH
+echo prep.bkgrst $YMDH
 
-HAFS_hfsa_mom6=${WORKhafshome}/${INIT}/${TCID}/forecast/RESTART
 BKGRST_DIR=${WORK3DVAR}/rst/${YMDH}/ctrl
 
 # 1) Does a background already exist? If so exit early
@@ -42,10 +35,9 @@ fi
 
 mkdir -p ${BKGRST_DIR}
 
-## ++++++++++ link from hfsa-mom6 workflow++++++++++++
+## ++++++++++ link MOM.res.nc from hfsa-mom6 fcst ++++++++++++
 
-ln -s ${HAFS_hfsa_mom6}/${YMDH:0:8}.${YMDH:8:2}0000.MOM.res_1.nc ${BKGRST_DIR}/MOM.res_1.nc
-ln -s ${HAFS_hfsa_mom6}/${YMDH:0:8}.${YMDH:8:2}0000.MOM.res.nc ${BKGRST_DIR}/MOM.res.nc
+ln -s ${BKGRST_INPUT_DIR}/${YMDH:0:8}.${YMDH:8:2}0000.MOM.res.nc ${BKGRST_DIR}/MOM.res.nc
 
 echo "done with prep.bkgrst"
 
