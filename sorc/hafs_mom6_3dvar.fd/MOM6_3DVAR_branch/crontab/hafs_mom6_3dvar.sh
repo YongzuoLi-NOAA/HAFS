@@ -25,14 +25,9 @@ cd ${HOME3DVAR}/crontab
 # (3) Link Obs
  ${SCRIPTS_DIR}/prep.obs.sh > ${LOG_DIR_CYCLE}/prep.obs
 
-#exit
-
 # (4) 3DVAR
 source ${HOME3DVAR}/parm/machine.orion.gnu
 source ${HOME3DVAR}/parm/exp.config
-
-rm -rf   ${WORK3DVAR}/SCRATCH/${YMDH}/run.var
-mkdir -p ${WORK3DVAR}/SCRATCH/${YMDH}/run.var
 
 # submit this script via SLURM
 opt=""
@@ -50,6 +45,4 @@ echo /opt/slurm/bin/sbatch $opt --time=$JOB_TIME -A $JOB_ACCT -J $JOB_NAME \
 
 /opt/slurm/bin/sbatch $opt --time=$JOB_TIME -A $JOB_ACCT -J $JOB_NAME \
    -o ${LOG_DIR_CYCLE}/run.var $SCRIPTS_DIR/run.var.sh
-
-exit
 

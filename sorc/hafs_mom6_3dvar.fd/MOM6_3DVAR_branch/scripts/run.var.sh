@@ -55,9 +55,6 @@ export SOCA_BIN_DIR=${HOME3DVAR}/exec
 
 export SCRATCH_DIR_CYCLE=${WORK3DVAR}/SCRATCH/${YMDH}
 
-WORK_DIR=${SCRATCH_DIR_CYCLE}/run.var
-mkdir -p ${WORK_DIR}
-
 export ANARST_DIR=$SCRATCH_DIR_CYCLE/ana_rst/ctrl
 export DIAGB_TMP_DIR=$SCRATCH_DIR_CYCLE/bmat
 export INCR_TMP_DIR=$SCRATCH_DIR_CYCLE/incr/ctrl
@@ -76,6 +73,10 @@ if [[ -d "$ANARST_DIR" && $(ls $ANARST_DIR -1q | wc -l) -gt 0 ]]; then
   echo "done with VAR"
   exit 0
 fi
+
+WORK_DIR=${SCRATCH_DIR_CYCLE}/run.var
+rm -rf ${WORK_DIR}
+mkdir -p ${WORK_DIR}
 
 # which mode are we running in?
 case "$DA_MODE" in
