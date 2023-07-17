@@ -179,10 +179,9 @@ ncap2 -s 'where (v > 100.0 ) v=0.0' test_uv_u0.nc test_uv_00.nc
 mv test_uv_00.nc ${outnc_uv}
 
 #==============================================================================
-export JEDI_SOCA_3DVAR='YES'
-YMDH=${CDATE:0:10}
 
 # Deliver HAFS_MOM6_3DVAR to intercom
+export JEDI_SOCA_3DVAR='YES'
 if [[ ${JEDI_SOCA_3DVAR} == 'YES' ]]; then
 
 export HOME3DVAR=${HOMEhafs}/MOM6_3DVAR
@@ -192,11 +191,10 @@ YMDH=${CDATE:0:10}
 TMP_DATE=${YMDH:0:8}Z${YMDH:8:2}
 export ANA_DATE=$(date -ud "$TMP_DATE")
 
-TCID=09L
 CYCLE_INTERVAL=24
 INIT=$(date -ud "$ANA_DATE - ${CYCLE_INTERVAL} hours" +%Y%m%d%H )
-export BKGRST_INPUT_DIR=/work2/noaa/hwrf/scrub/yongzuo/HAFS_hfsa_mom6/${INIT}/${TCID}/forecast/RESTART
-##export BKGRST_INPUT_DIR=${WORKhafs}/../../${INIT}/${TCID}/forecast/RESTART
+export BKGRST_INPUT_DIR=/work2/noaa/hwrf/scrub/yongzuo/HAFS_hfsa_mom6/${INIT}/${STORMID}/forecast/RESTART
+##export BKGRST_INPUT_DIR=${WORKhafs}/../../${INIT}/${STORMID}/forecast/RESTART
 
 ${HOME3DVAR}/crontab/hafs_mom6_3dvar.sh
 
