@@ -193,10 +193,16 @@ export ANA_DATE=$(date -ud "$TMP_DATE")
 
 CYCLE_INTERVAL=24
 INIT=$(date -ud "$ANA_DATE - ${CYCLE_INTERVAL} hours" +%Y%m%d%H )
-export BKGRST_INPUT_DIR=/work2/noaa/hwrf/scrub/yongzuo/HAFS_hfsa_mom6/${INIT}/${STORMID}/forecast/RESTART
-##export BKGRST_INPUT_DIR=${WORKhafs}/../../${INIT}/${STORMID}/forecast/RESTART
+BKGRST_INPUT_DIR=/work2/noaa/hwrf/scrub/yongzuo/HAFS_hfsa_mom6/${INIT}/${STORMID}/forecast/RESTART
+##BKGRST_INPUT_DIR=${WORKhafs}/../../${INIT}/${STORMID}/forecast/RESTART
 
-${HOME3DVAR}/crontab/hafs_mom6_3dvar.sh
+BKGRST_DIR=${WORK3DVAR}/rst
+rm -rf ${BKGRST_DIR}
+mkdir -p ${BKGRST_DIR}
+ln -s ${BKGRST_INPUT_DIR}/${YMDH:0:8}.${YMDH:8:2}0000.MOM.res.nc ${BKGRST_DIR}/MOM.res.nc
+
+${HOME3DVAR}/scripts/prep.obs.sh > ${WORK3DVAR}/prep.obs.log
+${HOME3DVAR}/scripts/run.var.sh > ${WORK3DVAR}/run.var.log
 
 ${NCP} -p ${WORK3DVAR}/output/ana_rst/MOM.res.nc ${WORKhafs}/intercom/ocn_prep/mom6/MOM.res.nc
 

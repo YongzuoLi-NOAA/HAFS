@@ -30,9 +30,9 @@ export obs_files_dir=${obs_src_dir}/${YMDH:0:4}/${YMDH:0:8}
 # obs_vars: sst sss adt salt temp
 for obs_var in $obs_vars; do
 
-    obs_dir=${WORK3DVAR}/obs/${obs_var}
-    rm -rf ${obs_dir}
-    mkdir -p ${obs_dir}
+    obs_var_dir=${WORK3DVAR}/obs/${obs_var}
+    rm -rf ${obs_var_dir}
+    mkdir -p ${obs_var_dir}
 
 #   platforms: goes metop npp jpss amsr ssh pfl
     tmpstr="${obs_var}_platforms"
@@ -41,13 +41,13 @@ for obs_var in $obs_vars; do
         obs_file="${obs_var}_${platform}_${YMDH}.nc"
         if [[ -d $obs_files_dir && $(ls $obs_files_dir/${obs_file} -1q 2>/dev/null | wc -l) -gt 0 ]]; then
         echo "Obs file found $obs_files_dir/${obs_file}"
-        ln -s ${obs_files_dir}/${obs_file} ${obs_dir}/.
+        ln -s ${obs_files_dir}/${obs_file} ${obs_var_dir}/.
         fi
     done
 
-    # make sure obs_dir isn't empty
-    if [[ $(ls $obs_dir/* -1q 2>/dev/null | wc -l) -eq 0 ]]; then
-        rm -rf $obs_dir
+    # make sure obs_var_dir isn't empty
+    if [[ $(ls $obs_var_dir/* -1q 2>/dev/null | wc -l) -eq 0 ]]; then
+        rm -rf $obs_var_dir
     fi
 done
 

@@ -1,4 +1,6 @@
 #!/bin/bash
+set -x
+date
 
 # (C) Copyright 2020-2020 UCAR
 #
@@ -46,24 +48,28 @@ export ANA_DATE=$(date -ud "$TMP_DATE")
 echo ${YMDH} $ANA_DATE 
 
 source ${HOME3DVAR}/parm/exp.config
+source ${HOME3DVAR}/parm/machine.orion.gnu
 
 # For SOCA 3DAR
-export SOCA_BIN_DIR=${HOME3DVAR}/exec
-export SOCA_STATIC_DIR=${HOME3DVAR}/fix/static
-export SOCA_DEFAULT_CFGS_DIR=${HOME3DVAR}/fix/SOCA_DEFAULT_CFGS_DIR
+SOCA_BIN_DIR=${HOME3DVAR}/exec
+SOCA_STATIC_DIR=${HOME3DVAR}/fix/static
+SOCA_DEFAULT_CFGS_DIR=${HOME3DVAR}/fix/SOCA_DEFAULT_CFGS_DIR
+
 # For MOM6
 MODEL_CFG_DIR=${HOME3DVAR}/fix/MODEL_CFG_DIR
 MODEL_DATA_DIR=${HOME3DVAR}/fix/MODEL_DATA_DIR
+
 # Input
-export BKGRST_DIR=${WORK3DVAR}/rst
-export OBS_DIR=${WORK3DVAR}/obs
+BKGRST_DIR=${WORK3DVAR}/rst
+OBS_DIR=${WORK3DVAR}/obs
+
 #Output
-export OUTPUT_DIR=${WORK3DVAR}/output
-export ANARST_DIR=$OUTPUT_DIR/ana_rst
-export DIAGB_TMP_DIR=$OUTPUT_DIR/bmat
-export INCR_TMP_DIR=$OUTPUT_DIR/incr
-export DIAG_TMP_DIR=$OUTPUT_DIR/diag
-export OBS_OUT_CTRL_DIR=$OUTPUT_DIR/obs_out
+OUTPUT_DIR=${WORK3DVAR}/output
+ANARST_DIR=$OUTPUT_DIR/ana_rst
+DIAGB_TMP_DIR=$OUTPUT_DIR/bmat
+INCR_TMP_DIR=$OUTPUT_DIR/incr
+DIAG_TMP_DIR=$OUTPUT_DIR/diag
+OBS_OUT_CTRL_DIR=$OUTPUT_DIR/obs_out
 
 MPIRUN=/opt/slurm/bin/srun
 
@@ -144,9 +150,9 @@ touch obs.yaml
 
 # obs_vars: sst sss adt salt temp
 for obs_var in $obs_vars; do
+
     # if obs directory doesn't exist, skipp this ob
     [[ ! -d $OBS_DIR/$obs_var ]] && continue
-
     # if obs directory is empty, skip
     [ "$(ls -A $OBS_DIR/$obs_var/)" ] || continue
 
@@ -155,6 +161,7 @@ for obs_var in $obs_vars; do
 
     # platforms: goes metop npp jpss amsr ssh pfl
     for platform in ${platforms}; do
+
         mkdir -p obs_out/${obs_var}_${platform}
         (
          cat $SOCA_DEFAULT_CFGS_DIR/obs/${obs_var}_${platform}.yaml > ob.tmp
@@ -248,9 +255,6 @@ for f in $BKGRST_DIR/*; do
     f2=$(basename $f)
     [[ ! -f $ANARST_DIR/$f2 ]] && ln -s $f $ANARST_DIR/
 done
-
-mkdir -p $OBS_OUT_CTRL_DIR
-mv obs_out/* $OBS_OUT_CTRL_DIR
 
 echo "done with VAR"
 
