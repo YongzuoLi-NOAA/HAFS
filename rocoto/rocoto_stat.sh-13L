@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rocotostat -w hafs-HAFS_hfsa_mom6-13L-${1}.xml -d hafs-HAFS_hfsa_mom6-13L-${1}.db -c ALL
+
+exit
+

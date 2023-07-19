@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rocotorewind -w hafs-HAFS_hfsa_mom6-13L-${1}.xml -d hafs-HAFS_hfsa_mom6-13L-${1}.db -c ${1}00 -t ${2}
+  rocotoboot -w hafs-HAFS_hfsa_mom6-13L-${1}.xml -d hafs-HAFS_hfsa_mom6-13L-${1}.db -c ${1}00 -t ${2}
+
+#exit
+

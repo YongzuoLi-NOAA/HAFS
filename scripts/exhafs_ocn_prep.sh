@@ -191,7 +191,9 @@ YMDH=${CDATE:0:10}
 TMP_DATE=${YMDH:0:8}Z${YMDH:8:2}
 export ANA_DATE=$(date -ud "$TMP_DATE")
 
-CYCLE_INTERVAL=24
+##CYCLE_INTERVAL=24
+CYCLE_INTERVAL=6
+
 INIT=$(date -ud "$ANA_DATE - ${CYCLE_INTERVAL} hours" +%Y%m%d%H )
 BKGRST_INPUT_DIR=/work2/noaa/hwrf/scrub/yongzuo/HAFS_hfsa_mom6/${INIT}/${STORMID}/forecast/RESTART
 ##BKGRST_INPUT_DIR=${WORKhafs}/../../${INIT}/${STORMID}/forecast/RESTART

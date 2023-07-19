@@ -1,0 +1,18 @@
+
+Implement JEDI SOCA MOM6 3DVAR in HAFS-MOM6 workflow
+
+(1) cp /work2/noaa/hwrf/yongzuo/HAFS/MOM6_3DVAR to (your HOMEhafs)/.
+
+(2) Based on /work2/noaa/hwrf/yongzuo/HAFS/rocoto/cronjob_hfsa_mom6.sh line 10-11, modify yours
+(3) Based on /work2/noaa/hwrf/yongzuo/HAFS/scripts/exhafs_ocn_prep.sh line 181-218, modify yours
+(4) Based on /work2/noaa/hwrf/yongzuo/HAFS/scripts/exhafs_forecast.sh line 1039-1047, modify yours
+(5) For /work2/noaa/hwrf/yongzuo/HAFS/parm/forecast/regional/input_nest.nml.tmp and input.nml.tmp 
+    change to input_filename = 'r'
+
+(6) Compare my 3DVAR output /work2/noaa/hwrf/scrub/yongzuo/HAFS_hfsa_mom6/2022092112/09L/MOM6_3DVAR with yours
+(7) compare my HAFS  output /work2/noaa/hwrf/scrub/yongzuo/HAFS_hfsa_mom6/2022092112/09L with yours
+
+/work2/noaa/hwrf/yongzuo/HAFS/parm/forecast/regional/nems.configure.mom6.tmp restart_n = 6
+
+ 
+
