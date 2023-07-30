@@ -1,34 +1,32 @@
 #!/usr/bin/env python3
 
-import sys
+from __future__ import print_function
 import argparse
 import netCDF4 as nc
-import numpy as np
 from datetime import datetime, timedelta
+import numpy as np
 import os
-from pathlib import Path
 
-IODA_CONV_PATH = Path(__file__).parent/"../lib/pyiodaconv"
-if not IODA_CONV_PATH.is_dir():
-    IODA_CONV_PATH = Path(__file__).parent/'..'/'lib-python'
-sys.path.append(str(IODA_CONV_PATH.resolve()))
+import pyiodaconv.ioda_conv_engines as iconv
+from pyiodaconv.orddicts import DefaultOrderedDict
 
-import ioda_conv_engines as iconv
-from collections import defaultdict, OrderedDict
-from orddicts import DefaultOrderedDict
+from warnings import filterwarnings
+filterwarnings(action='ignore', category=DeprecationWarning, message='`np.bool` is a deprecated alias')
 
 locationKeyList = [
     ("latitude", "float"),
     ("longitude", "float"),
-    #("datetime", "string"),
-    ("datetime", "int32"),
+    ("dateTime", "string"),
 ]
 
-obsvars = { '': '', }
+locationKeyListpfl = [
+    ("latitude", "float"),
+    ("longitude", "float"),
+    ("depth", "float"),
+    ("dateTime", "string")
+]
 
-AttrData = { 'converter': os.path.basename(__file__),
-    'nvars': np.int32(len(obsvars)),
-}
+GlobalAttrs = {}
 
 DimDict = { }
 
@@ -40,11 +38,10 @@ class marine(object):
     def __init__(self, filename, varname):
         self.filename = filename
         self.varname = varname
-        self.varDict = defaultdict(lambda: defaultdict(dict))
-        self.metaDict = defaultdict(lambda: defaultdict(dict))
-        self.outdata = defaultdict(lambda: DefaultOrderedDict(OrderedDict))
-        self.var_mdata = defaultdict(lambda: DefaultOrderedDict(OrderedDict))
-        #self.VarAttrs = DefaultOrderedDict(lambda: DefaultOrderedDict(dict))
+        self.varDict = DefaultOrderedDict(lambda: DefaultOrderedDict(dict))
+        self.metaDict = DefaultOrderedDict(lambda: DefaultOrderedDict(dict))
+        self.data = DefaultOrderedDict(lambda: DefaultOrderedDict(dict))
+        self.var_mdata = DefaultOrderedDict(lambda: DefaultOrderedDict(dict))
         self.units = {}
         self._read()
 
@@ -62,14 +59,14 @@ class marine(object):
         val=np.ndarray(shape=(lines), dtype=np.float32, order='F')
         err=np.ndarray(shape=(lines), dtype=np.float32, order='F')
         qc =np.ndarray(shape=(lines), dtype=np.int32, order='F')
-         
-        if ( self.varname == 'waterTemperature' ):
-           sws_val=np.ndarray(shape=(lines), dtype=np.float32, order='F')
-           sws_err=np.ndarray(shape=(lines), dtype=np.float32, order='F')
-           sws_qc =np.ndarray(shape=(lines), dtype=np.int32, order='F')
+        if ( self.varname == 'waterTemperature' or  self.varname == 'salinity'):
            depth  =np.ndarray(shape=(lines), dtype=np.float32, order='F')
-       
+         
         dates = []
+
+        valKey = self.varname, iconv.OvalName()
+        errKey = self.varname, iconv.OerrName()
+        qcKey = self.varname, iconv.OqcName()
 
         obs_txt = open(self.filename, "r")
         i=0
@@ -80,56 +77,29 @@ class marine(object):
             dd=int(b[6:8])
             hh=int(b[8:10])
             mn=int(b[10:12])
-
-            #print(line)
-            #print(yyyy)
-            #print(mm)
-            #print(dd)
-            #print(hh)
-            #print(mn)
-
             sa = datetime(yyyy, mm, dd, hh, mn, 0, 0)
-            #s2=str(int(sa.timestamp()))
-            s2=int(sa.timestamp())
-            #print(s2)
-            #s2=sa.strftime("%Y-%m-%dT%H:%M:%SZ")
-            dates.append(s2)
 
             lat[i] = float(line.split()[1])
             lon[i] = float(line.split()[2])
             val[i] = float(line.split()[3])
             err[i] = float(line.split()[4])
             qc[i]  = float(line.split()[5])
+            if (self.varname == 'waterTemperature' or  self.varname == 'salinity'):
+               depth[i] = float(line.split()[6])
 
-            if ( self.varname == 'waterTemperature' ):
-               sws_val[i] = float(line.split()[6])
-               sws_err[i] = float(line.split()[7])
-               sws_qc[i]  = float(line.split()[8])
-               depth[i]   = float(line.split()[9])
+            if (self.varname == 'waterTemperature' or  self.varname == 'salinity'):
+               locKey = lat[i], lon[i], depth[i], sa.strftime("%Y-%m-%dT%H:%M:%SZ")
+            else:
+               locKey = lat[i], lon[i], sa.strftime("%Y-%m-%dT%H:%M:%SZ")
+               #print(sa.strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+            self.data[locKey][valKey] = val[i] 
+            self.data[locKey][errKey] = err[i]
+            self.data[locKey][qcKey] = qc[i]
+
             #print(i)
             i=i+1
         obs_txt.close()
-
-        #self.outdata[('datetime', 'MetaData')]=np.empty(len(dates), dtype=object)
-        self.outdata[('datetime', 'MetaData')]=np.empty(len(dates), dtype="int32")
-        self.outdata[('datetime', 'MetaData')][:] = dates
-
-        self.outdata[('latitude', 'MetaData')]  =lat
-        self.outdata[('longitude', 'MetaData')] =lon
-        self.outdata[(self.varname, 'ObsError')]=err
-        self.outdata[(self.varname, 'ObsValue')]=val
-        self.outdata[(self.varname, 'PreQC')]   =qc
-
-        if ( self.varname == 'waterTemperature' ):
-           print('salinity')
-           self.outdata[('salinity', 'ObsError')]=sws_err
-           self.outdata[('salinity', 'ObsValue')]=sws_val
-           self.outdata[('salinity', 'PreQC')]   =sws_qc
-           self.outdata[('depth', 'MetaData')]=depth
-
-        # get global attributes
-        DimDict['nlocs'] = len(val)
-        AttrData['nlocs'] = np.int32(DimDict['nlocs'])
 
 def main():
 
@@ -158,11 +128,24 @@ def main():
     # Read in the marine data
     obs = marine(args.input,args.varname)
 
-    # setup the IODA writer
-    writer = iconv.IodaWriter(args.output, locationKeyList, DimDict)
+    # write them out
+    if (args.varname == 'waterTemperature' or args.varname == 'salinity'):
+       ObsVars, Location = iconv.ExtractObsData(obs.data, locationKeyListpfl)
+    else:
+       ObsVars, Location = iconv.ExtractObsData(obs.data, locationKeyList)
 
-    # write everything out
-    writer.BuildIoda(obs.outdata, VarDims, obs.var_mdata, AttrData, obs.units)
+    DimDict = {'Location': Location}
+    if (args.varname == 'waterTemperature' or args.varname == 'salinity'):
+       writer = iconv.IodaWriter(args.output, locationKeyListpfl, DimDict)
+    else:
+       writer = iconv.IodaWriter(args.output, locationKeyList, DimDict)
+
+    VarAttrs = DefaultOrderedDict(lambda: DefaultOrderedDict(dict))
+    VarAttrs[(args.varname, 'ObsValue')]['_FillValue'] = 999
+    VarAttrs[(args.varname, 'ObsError')]['_FillValue'] = 999
+    VarAttrs[(args.varname, 'PreQC')]['_FillValue'] = 999
+
+    writer.BuildIoda(ObsVars, VarDims, VarAttrs, GlobalAttrs)
 
 if __name__ == '__main__':
     main()

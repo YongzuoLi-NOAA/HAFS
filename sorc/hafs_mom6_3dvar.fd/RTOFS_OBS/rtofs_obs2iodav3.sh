@@ -2,6 +2,9 @@
 
 export HOMEwork=/scratch2/NCEPDEV/marine/Yongzuo.Li/RTOFS2IODA_V3
 
+#START_YMDH=2022092212
+#  END_YMDH=2022092212
+
 START_YMDH=2022090100
   END_YMDH=2022100500
 
@@ -16,9 +19,7 @@ DH=6
 #SKIP=1
 #if [[ SKIP == "0" ]]; then
 ######################### convert RTOFS SST into IODA v3 ############
-#platlist=(amsr goes himawari metop npp jpss)
-
-platlist=(amsr goes metop npp jpss)
+platlist=(amsr goes himawari metop npp jpss)
 
 YMDH=$(date -ud "$date_YMDH " +%Y%m%d%H )
 
@@ -101,9 +102,84 @@ mkdir NC
 fi
 mv sst_*.nc NC/.
 
+##fi  # SKIP
 exit
 
+
+##SKIP=0
+##if [[ SKIP == "0" ]]; then
+################### convert RTOFS profile into IODA v3 ##############
+
+DH=6
+platlist=(profile)
+
+YMDH=$(date -ud "$date_YMDH " +%Y%m%d%H )
+today=${YMDH:0:8}00
+
+YMDHm1d=$(date -ud "$date_YMDH - 19 hours" +%Y%m%d%H )
+yesterday=${YMDHm1d:0:8}00
+
+winstart=$(date -ud "$date_YMDH - 3 hours" +%Y%m%d%H )
+winend=$(date -ud "$date_YMDH + 3 hours" +%Y%m%d%H )
+
+while [ "$YMDH" -le "$END_YMDH" ]; do
+
+today=${YMDH:0:8}00
+yesterday=${YMDHm1d:0:8}00
+echo $winstart $YMDH $winend
+
+for plat in ${platlist[@]}; do
+
+rm window.txt
+echo ${winstart}00 > window.txt
+echo ${winend}00 >> window.txt
+
+rm profile.bin profile.txt
+if [[ ${YMDH:8:2} == "00" ]]; then
+ls -l ${HOMEwork}/ocnqc/profile/${yesterday}.${plat}
+ln -sf ${HOMEwork}/ocnqc/profile/${yesterday}.${plat} profile.bin
+${HOMEwork}/rtofs_obs_read.x read_profile
+if [[ -f profile.txt ]]; then
+mv profile.txt profileab.txt
+fi
+fi
+
+ls -l ${HOMEwork}/ocnqc/profile/${today}.${plat}
+ln -sf ${HOMEwork}/ocnqc/profile/${today}.${plat} profile.bin
+${HOMEwork}/rtofs_obs_read.x read_profile
+
+if [[ -f profile.txt ]]; then
+cat profile.txt >> profileab.txt
+fi
+
+mv profileab.txt profile.txt
+echo start NETCDF
+
+${HOMEwork}/rtofs_ascii2iodav3.py -i temp.txt -v waterTemperature -o ./temp_pfl_${YMDH}.nc
+${HOMEwork}/rtofs_ascii2iodav3.py -i salt.txt -v salinity -o ./salt_pfl_${YMDH}.nc
+
+done # plat loop
+
+YMDH=$(date -ud "$date_YMDH + $DH hours" +%Y%m%d%H )
+
+DHH=$(($DH-12))
+YMDHm1d=$(date -ud "$date_YMDH + $DHH hours" +%Y%m%d%H )
+
+DHm3h=$(($DH-3))
+winstart=$(date -ud "$date_YMDH + $DHm3h hours" +%Y%m%d%H )
+
+DHp3h=$(($DH+3))
+winend=$(date -ud "$date_YMDH + $DHp3h hours" +%Y%m%d%H )
+
+DH=$(($DH+6))
+
+done # time loop
+
+mv temp_pfl_*.nc NC/.
+mv salt_pfl_*.nc NC/.
+
 ##fi  # SKIP
+
 ######################### convert RTOFS SSH into IODA v3 ############
 
 DH=6
@@ -171,75 +247,6 @@ DH=$(($DH+6))
 done # time loop
 
 mv adt_*.nc NC/.
-
-#fi  # SKIP
-################### convert RTOFS profile into IODA v3 ##############
-
-DH=6
-platlist=(profile)
-
-YMDH=$(date -ud "$date_YMDH " +%Y%m%d%H )
-today=${YMDH:0:8}00
-
-YMDHm1d=$(date -ud "$date_YMDH - 19 hours" +%Y%m%d%H )
-yesterday=${YMDHm1d:0:8}00
-
-winstart=$(date -ud "$date_YMDH - 3 hours" +%Y%m%d%H )
-winend=$(date -ud "$date_YMDH + 3 hours" +%Y%m%d%H )
-
-while [ "$YMDH" -le "$END_YMDH" ]; do
-
-today=${YMDH:0:8}00
-yesterday=${YMDHm1d:0:8}00
-echo $winstart $YMDH $winend
-
-for plat in ${platlist[@]}; do
-
-rm window.txt
-echo ${winstart}00 > window.txt
-echo ${winend}00 >> window.txt
-
-rm profile.bin profile.txt
-if [[ ${YMDH:8:2} == "00" ]]; then
-ls -l ${HOMEwork}/ocnqc/profile/${yesterday}.${plat}
-ln -sf ${HOMEwork}/ocnqc/profile/${yesterday}.${plat} profile.bin
-${HOMEwork}/rtofs_obs_read.x read_profile
-if [[ -f profile.txt ]]; then
-mv profile.txt profileab.txt
-fi
-fi
-
-ls -l ${HOMEwork}/ocnqc/profile/${today}.${plat}
-ln -sf ${HOMEwork}/ocnqc/profile/${today}.${plat} profile.bin
-${HOMEwork}/rtofs_obs_read.x read_profile
-
-if [[ -f profile.txt ]]; then
-cat profile.txt >> profileab.txt
-fi
-
-mv profileab.txt profile.txt
-echo start NETCDF
-
-${HOMEwork}/rtofs_ascii2iodav3.py -i profile.txt -v waterTemperature -o ./insitu_${plat}_${YMDH}.nc
-
-done # plat loop
-
-YMDH=$(date -ud "$date_YMDH + $DH hours" +%Y%m%d%H )
-
-DHH=$(($DH-12))
-YMDHm1d=$(date -ud "$date_YMDH + $DHH hours" +%Y%m%d%H )
-
-DHm3h=$(($DH-3))
-winstart=$(date -ud "$date_YMDH + $DHm3h hours" +%Y%m%d%H )
-
-DHp3h=$(($DH+3))
-winend=$(date -ud "$date_YMDH + $DHp3h hours" +%Y%m%d%H )
-
-DH=$(($DH+6))
-
-done # time loop
-
-mv insitu_profile_*.nc NC/.
 
 #fi  # SKIP
 
