@@ -8,10 +8,16 @@
 
       call getarg(1, argv)
 
-      latmin=1.0
-      latmax=50.0
-      lonmin=-100.0
-      lonmax=-7.0
+
+!      latmin=1.0
+!      latmax=50.0
+!      lonmin=-100.0
+!      lonmax=-7.0
+
+      open(1,file='domain.txt',status='old')
+      read(1,*) latmin, latmax, lonmin, lonmax
+      close(1)
+      print*,latmin, latmax, lonmin, lonmax
 
       if(argv.eq.'read_sst') then
          print*, 'read_sst'

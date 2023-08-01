@@ -1,25 +1,28 @@
+(1) Build GDASapp (optional, may use mine)
+    mkdir GDASApp-20230724
+    cd GDASApp-20230724
+    git clone https://github.com/NOAA-EMC/GDASApp.git
+    cd GDASApp
+    ./build.sh -t hera
+    ls build/bin 
+ 
+    put folowing in .bashrc
+    module use /scratch2/NCEPDEV/marine/Yongzuo.Li/GDASApp-20230724/GDASApp/modulefiles
+    module load GDAS/hera
+    export PYTHONPATH=$PYTHONPATH:/scratch2/NCEPDEV/marine/Yongzuo.Li/GDASApp-20230724/GDASApp/build/lib/python3.7/pyioda
 
-Makefile  rtofs_ascii2iodav2.py  rtofs_obs2iodav2_6H.sh rtofs_obs2iodav2_24H.sh  rtofs_obs_read.F90
+(2) link /scratch2/NCEPDEV/marine/Yongzuo.Li/GDASApp-20230724/GDASApp/build/lib/python3.7/pyioda  
+         /scratch2/NCEPDEV/marine/Yongzuo.Li/GDASApp-20230724/GDASApp/build/lib/python3.7/pyiodaconv
+    to your work directory  
 
-(1) 6H for 6 h obs window. 
-Example:
-/work/noaa/marine/yli/RTOFS_OBS
-Orion-login-4[265] yongzuo$ ls DATA/*/2022/20220920
-DATA/jpss/2022/20220920:
-sst_jpss_2022092000.nc  sst_jpss_2022092006.nc  sst_jpss_2022092012.nc  sst_jpss_2022092018.nc
+(3) copy /scratch2/NCEPDEV/marine/Yongzuo.Li/RTOFS2IODA_V3/scp/* to your work dirctory
 
-DATA/metop/2022/20220920:
-sst_metop_2022092000.nc  sst_metop_2022092006.nc  sst_metop_2022092012.nc  sst_metop_2022092018.nc
+(4) Modify domain and time in rtofs_obs2iodav3.sh
 
-DATA/profile/2022/20220920:
-insitu_profile_2022092000.nc  insitu_profile_2022092012.nc
-insitu_profile_2022092006.nc  insitu_profile_2022092018.nc
+(5) ./rtofs_obs2iodav3.sh
 
-DATA/ssh/2022/20220920:
-adt_ssh_2022092000.nc  adt_ssh_2022092006.nc  adt_ssh_2022092012.nc  adt_ssh_2022092018.nc
+(6) /scratch2/NCEPDEV/marine/Yongzuo.Li/RTOFS2IODA_V3
+    input ./ocnqc from htar_ncoda_ocnqc.sh
+    output ./NC
 
-(2) 24H for 24 h obs window.
 
-(3) iodav2_4_3dvar.sh links IODA v2 nc files in directories used in exp.config.
-
-(4) htar -xv -f ocnqc.tar every 14 days
