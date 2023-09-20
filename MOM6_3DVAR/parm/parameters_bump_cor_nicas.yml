@@ -1,0 +1,68 @@
+geometry:
+  geom_grid_file: ./soca_gridspec.nc
+  mom6_input_nml: ./input.nml
+  fields metadata: ./fields_metadata.yml
+
+background:
+  read_from_file: 1
+  date: &date 2023-07-22T12:00:00Z
+  basename: ./restarts/
+  ocn_filename: MOM.res.nc
+  # basename: data_generated/convertstate/
+  # ocn_filename: ocn.convertstate.fc.2018-04-15T00:00:00Z.PT0S.nc
+  state variables: [socn, tocn, ssh]
+
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: BUMP_NICAS
+    calibration:
+      io:
+        data directory: data_generated/parameters_bump_cor_nicas
+        files prefix: bump
+      drivers:
+        multivariate strategy: univariate
+        compute nicas: true
+        write local nicas: true
+      model:
+        do not cross mask boundaries: true
+      nicas:
+        resolution: 6.0
+        explicit length-scales: true
+        horizontal length-scale:
+        - groups:
+          - socn
+          - tocn
+          - ssh
+          value: 250.0e3
+        vertical length-scale:
+        - groups:
+          - socn
+          - tocn
+          - ssh
+          value: 10
+      grids:
+      - model:
+          variables:
+          - socn
+          - tocn
+      - model:
+          variables:
+          - ssh
+      output model files:
+      - parameter: cor_rh
+        file:
+          datadir: data_generated/parameters_bump_cor_nicas
+          date: *date
+          exp: parameters_bump_cor_nicas.cor_rh
+          type: an
+      - parameter: cor_rv
+        file:
+          datadir: data_generated/parameters_bump_cor_nicas
+          date: *date
+          exp: parameters_bump_cor_nicas.cor_rv
+          type: an
+
+test:
+  reference filename: testref/parameters_bump_cor_nicas.test
+  test output filename: testoutput/parameters_bump_cor_nicas.test

@@ -1,0 +1,226 @@
+# common filters used later on
+_: &land_mask
+  filter: Domain Check
+  where:
+  - variable: {name: GeoVaLs/sea_area_fraction}
+    minvalue: 0.5
+
+cost function:
+  cost type: 3D-Var
+  window begin: 2023-07-21T12:00:00Z
+  window length: P2D
+  analysis variables: &soca_vars [socn, tocn, ssh]
+  geometry: &geom_small
+    geom_grid_file: ./soca_gridspec.nc
+    mom6_input_nml: ./input.nml
+    fields metadata: ./fields_metadata.yml
+
+  background:
+    read_from_file: 1
+    # TODO this is wrong? should use low res to avoid interp?
+    basename: ./restarts/
+    ocn_filename: MOM.res.nc
+    date: 2023-07-22T12:00:00Z
+    state variables: [hocn, socn, tocn, ssh, mld, layer_depth]
+
+  background error:
+    covariance model: SABER
+    saber central block:
+      saber block name: BUMP_NICAS
+      read:
+        io:
+          data directory: bump_nicas/parameters_bump_cor_nicas
+          files prefix: bump
+        drivers:
+          multivariate strategy: univariate
+          read local nicas: true
+        grids:
+        - model:
+            variables:
+            - socn
+            - tocn
+        - model:
+            variables:
+            - ssh
+
+    linear variable change:
+      input variables: *soca_vars
+      output variables: *soca_vars
+      linear variable changes:
+      - linear variable change name: BkgErrFILT
+        ocean_depth_min: 1000 # [m]
+        rescale_bkgerr: 1.0
+        efold_z: 2500.0       # [m]
+
+        linear variable change name: BkgErrSOCA
+        read_from_file: 3
+        basename: /work/noaa/hwrf/save/yongzuo/HAFS/MOM6_3DVAR/fix/BE/
+        ocn_filename: ocn.stddev_NHC.2022-09-21T12Z.nc
+        remap_filename: ./restarts/MOM.res.nc
+        date: '2022-09-21T12Z'
+        t_min: 0.25     ##0.8
+        t_max: 1.5      ##0.8
+        s_min: 1.0      ##1.5
+        s_max: 2.0      ##1.5
+        ssh_min: 0.1    ##0.3
+        ssh_max: 0.3    ##0.3
+
+      - linear variable change name: BalanceSOCA
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 10
+        ksshts:
+          nlayers: 10
+
+  observations:
+    observers:
+    - obs space:
+        name: SeaSurfaceTemp
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: output/sst.3dvarbump.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: obs/sst_goes.nc
+        simulated variables: [seaSurfaceTemperature]
+      obs operator:
+        name: Identity
+        observation alias file: testinput/obsop_name_map.yml
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Bounds Check
+        minvalue: 5.0
+        maxvalue: 35.0
+      - filter: Background Check
+        threshold: 5
+      - filter: Thinning
+        amount: 0.1
+        random seed: 0
+
+    - obs space:
+        name: SeaSurfaceSalinity
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: output/sss.3dvarbump.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: obs/sss.nc
+        simulated variables: [seaSurfaceSalinity]
+      obs operator:
+        name: Identity
+        observation alias file: testinput/obsop_name_map.yml
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Bounds Check
+        minvalue: 0.1
+        maxvalue: 40.0
+      - filter: Background Check
+        threshold: 5.0
+      - filter: Domain Check
+        where:
+        - variable: {name: GeoVaLs/sea_surface_temperature}
+          minvalue: 15
+
+    - obs space:
+        name: ADT
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: output/adt.3dvarbump.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: obs/adt.nc
+        simulated variables: [absoluteDynamicTopography]
+      obs operator:
+        name: ADT
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable: {name: GeoVaLs/sea_floor_depth_below_sea_surface}
+          minvalue: 2000
+      - filter: Background Check
+        absolute threshold: 0.2
+
+    - obs space:
+        name: InsituTemperature
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: output/prof_T.3dvarbump.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: obs/temp_prof.nc
+        simulated variables: [waterTemperature]
+      obs operator:
+        name: InsituTemperature
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Bounds Check
+        minvalue: -2.0
+        maxvalue: 36.0
+      - filter: Background Check
+        threshold: 5
+
+    - obs space:
+        name: InsituSalinity
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: output/prof_S.3dvarbump.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: obs/salt_prof.nc
+        simulated variables: [salinity]
+      obs operator:
+        name: VertInterp
+        observation alias file: testinput/obsop_name_map.yml
+        vertical coordinate: sea_water_depth
+        observation vertical coordinate: depth
+        interpolation method: linear
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Bounds Check
+        minvalue: 1.0
+        maxvalue: 40.0
+      - filter: Background Check
+        threshold: 5.0
+
+variational:
+  minimizer:
+    algorithm: RPCG
+  iterations:
+  - geometry: *geom_small
+    ninner: 100
+    gradient norm reduction: 1e-3
+    test: on
+    diagnostics:
+      departures: ombg
+
+output:
+  datadir: output
+  exp: 3dvarbump
+  type: an
+
+final:
+  diagnostics:
+    departures: oman
+
