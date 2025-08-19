@@ -5,7 +5,7 @@
   module load mvapich2/1.9-r6338_pgi_64 
   module load netcdf/4.3.3.1_pgi_64 
 
-# Get into NMMB directory
+# Get Linto NMMB directory
 
   cd $NMMB_DIR
   HH=$ST_HH

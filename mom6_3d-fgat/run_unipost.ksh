@@ -3,7 +3,7 @@
 #PBS -o UPP.out
 #PBS -V
 
-#
+# M
 set -x
 
 export YYYYMMDDHH=${startdate}

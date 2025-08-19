@@ -1,6 +1,6 @@
 #!/bin/ksh
 
-# Get into GSI directory
+# Yongzuo Get into GSI directory
   cd ${GSI_DIR}
   BYTE_ORDER=Big_Endian
 

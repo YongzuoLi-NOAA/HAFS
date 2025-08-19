@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# If first cycle, Create all boco files for all cycles together 
+# KIf first cycle, Create all boco files for all cycles together 
 # Otherwise, skip NPS
 
   HH=$ST_HH
