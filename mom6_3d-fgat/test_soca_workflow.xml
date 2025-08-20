@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!DOCTYPE workflow [
+  <!ENTITY HOMEBASE "/gpfs/f5/cpchso/scratch/Yongzuo.Li/mom6_3d-fgat_rocoto">
+  <!ENTITY WORKBASE "/gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH">
+  <!ENTITY LOG_DIR "&HOMEBASE;/logs">
+  <!ENTITY rocoto "&HOMEBASE;/rocoto">
+  <!ENTITY SCHEDULER "slurm">
+  <!ENTITY ACCOUNT "cpcenso">
+  <!ENTITY PARTITION "batch">
+]>
+<workflow realtime="F" scheduler="slurm">
+  <log><cyclestr>&LOG_DIR;/3d-fgat_mom6_forecast.log</cyclestr></log>
+
+  <cycledef group="group1">202312101200 202312121200 24:00:00</cycledef>
+
+  <!-- TASK: JEDI-SOCA 3DVAR -->
+  <task name="3d-fgat" maxtries="1">
+    <command>&rocoto;/3d-fgat.bash</command>
+    <jobname><cyclestr>3d-fgat.@Y@m@d@H</cyclestr></jobname>
+    <cores>480</cores>
+    <walltime>00:10:00</walltime>
+    <account>&ACCOUNT;</account>
+    <partition>&PARTITION;</partition>
+    <native>--qos=normal -N 12 --ntasks-per-node=40 --clusters=c5 --exclusive</native>
+    <stdout><cyclestr>&LOG_DIR;/3d-fgat.@Y@m@d@H.out</cyclestr></stdout>
+    <stderr><cyclestr>&LOG_DIR;/3d-fgat.@Y@m@d@H.err</cyclestr></stderr>
+    <envar>
+      <name>HOMEBASE</name>
+      <value>&HOMEBASE;</value>
+    </envar>
+    <envar>
+      <name>WORKBASE</name>
+      <value>&WORKBASE;</value>
+    </envar>
+    <envar>
+      <name>ANA_TIME</name>
+      <value><cyclestr>@Y@m@d@H</cyclestr></value>
+    </envar>
+  </task>
+
+  <!-- TASK: MOM6 Forecast -->
+  <task name="mom6_forecast" maxtries="1">
+    <command>&rocoto;/forecast.bash</command>
+    <jobname><cyclestr>mom6_forecast.@Y@m@d@H</cyclestr></jobname>
+    <cores>156</cores>
+    <walltime>00:30:00</walltime>
+    <account>&ACCOUNT;</account>
+    <partition>&PARTITION;</partition>
+    <!-- Keep your placement; add explicit binding (Rome) -->
+    <native>--qos=normal -N 4 --ntasks-per-node=39 --clusters=c5 --exclusive</native>
+
+    <dependency><taskdep task="3d-fgat"/></dependency>
+
+    <stdout><cyclestr>&LOG_DIR;/mom6_forecast.@Y@m@d@H.out</cyclestr></stdout>
+    <stderr><cyclestr>&LOG_DIR;/mom6_forecast.@Y@m@d@H.err</cyclestr></stderr>
+
+    <!-- Cycle time -->
+    <envar><name>ANA_TIME</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+
+    <!-- PET layout (matches your successful run) -->
+    <envar><name>UFS_MEDPETS</name><value>16</value></envar>
+    <envar><name>UFS_ATMPETS</name><value>16</value></envar>
+    <envar><name>UFS_OCNPETS</name><value>100</value></envar>
+    <envar><name>UFS_ICEPETS</name><value>24</value></envar>
+
+    <!-- Forecast knobs -->
+    <envar><name>FCST_LEN_HRS</name><value>24</value></envar>
+    <envar><name>FCST_RESTART</name><value>1</value></envar>
+    <envar><name>MODEL_RES</name><value>1deg</value></envar>
+
+    <!-- Optional: diag scratch (created by script if set) -->
+    <envar>
+      <name>DIAG_TMP_DIR</name>
+      <value><cyclestr>/gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH/@Y@m@d@H/diag</cyclestr></value>
+    </envar>
+  </task>
+
+</workflow>
