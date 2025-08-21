@@ -28,9 +28,6 @@ cd ${WORKBASE}/${ANA_TIME}/3d-fgat
 pwd
 mkdir -p OUTPUT data_output
 
-#mkdir -p /gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH/${ANA_TIME}/3d-fgat
-#cd /gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH/${ANA_TIME}/3d-fgat
-
 ln -sf ${HOMEBASE}/soca_fix/* .
 ln -sf ${HOMEBASE}/soca_parm/3d-fgat.yml-${ANA_TIME} 3d-fgat.yml
 ln -sf ${HOMEBASE}/obs .
