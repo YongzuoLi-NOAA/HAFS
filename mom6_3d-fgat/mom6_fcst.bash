@@ -17,18 +17,53 @@ echo "ANA_TIME: ${ANA_TIME:-unset}"
 : "${ANA_TIME:?ANA_TIME is not set}"
 
 # ---- Paths (adjust only if your layout differs) ----
-RUN_DIR=${RUN_DIR:-${WORKBASE}/${ANA_TIME}/forecast}
+##RUN_DIR=${RUN_DIR:-${RUNBASE}/${ANA_TIME}/mom6_fcst}
+RUN_DIR=${RUN_DIR:-${RUNBASE}/${ANA_TIME}/mom6_fcst}
+
+# refuse to delete if RUN_DIR isn't under your SCRATCH tree
+if [[ "$RUN_DIR" == /gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH/*/mom6_fcst ]]; then
+  rm -rf -- "$RUN_DIR"
+else
+  echo "Refusing to rm dangerous RUN_DIR: $RUN_DIR" >&2
+  exit 2
+fi
+
+mkdir -p "$RUN_DIR"
+cd "$RUN_DIR"
+
 echo "RUN_DIR: ${RUN_DIR}"
-mkdir ${RUN_DIR}
-cd "${RUN_DIR}"
+
+##mkdir -p ${RUN_DIR}
+##cd "${RUN_DIR}"
+
+echo YongzuoLi-NOAA
+pwd
 
 CALbump_BASE=/gpfs/f5/cpchso/scratch/JieShun.Zhu/ng-godas/EXPrt.ice/CALbump
 cp -r ${CALbump_BASE}/SCRATCH/${ANA_TIME}/run.fcst/* .
+ls -l
+rm RESTART
+mkdir -p RESTART
 
 rm rpointer.cpl rpointer.atm ./restart/ice.restart_file
-cp ${HOMEBASE}/mom6_parm/rpointer.cpl-${ANA_TIME} rpointer.cpl
-cp ${HOMEBASE}/mom6_parm/rpointer.atm-${ANA_TIME} rpointer.atm
-cp ${HOMEBASE}/mom6_parm/ice.restart_file-${ANA_TIME} ./restart/ice.restart_file
+cp ${HOMEBASE}/mom6_parm/rpointer.cpl-tmp rpointer.cpl
+cp ${HOMEBASE}/mom6_parm/rpointer.atm-tmp rpointer.atm
+cp ${HOMEBASE}/mom6_parm/ice.restart_file-tmp ./restart/ice.restart_file
+YMD=${ANA_TIME}
+
+sed -i "s;YYYY;${YMD:0:4};g" rpointer.cpl
+sed -i "s;MM;${YMD:4:2};g" rpointer.cpl
+sed -i "s;DD;${YMD:6:2};g" rpointer.cpl
+
+sed -i "s;YYYY;${YMD:0:4};g" rpointer.atm
+sed -i "s;MM;${YMD:4:2};g" rpointer.atm
+sed -i "s;DD;${YMD:6:2};g" rpointer.atm
+
+sed -i "s;YYYY;${YMD:0:4};g" ./restart/ice.restart_file
+sed -i "s;MM;${YMD:4:2};g" ./restart/ice.restart_file
+sed -i "s;DD;${YMD:6:2};g" ./restart/ice.restart_file
+
+
 cp ${HOMEBASE}/exec/fv3_datm_cdeps_intel.exe .
 
 # ---- Quick modules/env (matches your earlier env) ----
@@ -50,7 +85,6 @@ ymdh=${YMDH:0:4}-${YMDH:4:2}-${YMDH:6:2}
 echo ${ymdh}
 ls -l *${ymdh}* */*${ymdh}*
 rm *${ymdh}* */*${ymdh}*
-rm -rf RESTART; mkdir RESTART
 rm -f PET*.ESMF_LogFile *.log || true
 
 # ---- Launch ----
@@ -58,7 +92,7 @@ echo "Launching with srun -n ${SLURM_NTASKS}"
 set +e
 
 srun --cpu-bind=cores --hint=nomultithread -n "${SLURM_NTASKS}" ./fv3_datm_cdeps_intel.exe \
-       2>&1 | tee -a forecast.log
+       2>&1 | tee -a mom6_fcst.log
 rc=$?
 set -e
 
