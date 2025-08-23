@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE workflow [
   <!ENTITY HOMEBASE "/gpfs/f5/cpchso/scratch/Yongzuo.Li/mom6_3d-fgat_rocoto">
-  <!ENTITY WORKBASE "/gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH">
+  <!ENTITY RUNBASE "/gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH">
   <!ENTITY LOG_DIR "&HOMEBASE;/logs">
   <!ENTITY rocoto "&HOMEBASE;/rocoto">
   <!ENTITY SCHEDULER "slurm">
@@ -10,8 +10,7 @@
 ]>
 <workflow realtime="F" scheduler="slurm">
   <log><cyclestr>&LOG_DIR;/3d-fgat_mom6_fcst.log</cyclestr></log>
-
-  <cycledef group="group1">202312131200 202312151200 24:00:00</cycledef>
+  <cycledef group="group1">202312101200 202312111200 24:00:00</cycledef>
 
   <!-- TASK: JEDI-SOCA 3DVAR -->
   <task name="3d-fgat" maxtries="1">
@@ -29,8 +28,8 @@
       <value>&HOMEBASE;</value>
     </envar>
     <envar>
-      <name>WORKBASE</name>
-      <value>&WORKBASE;</value>
+      <name>RUNBASE</name>
+      <value>&RUNBASE;</value>
     </envar>
     <envar>
       <name>ANA_TIME</name>
@@ -59,8 +58,8 @@
       <value>&HOMEBASE;</value>
     </envar>
     <envar>
-      <name>WORKBASE</name>
-      <value>&WORKBASE;</value>
+      <name>RUNBASE</name>
+      <value>&RUNBASE;</value>
     </envar>
     <envar>
       <name>START_TIME</name>

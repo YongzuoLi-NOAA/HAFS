@@ -23,16 +23,47 @@ module -t list
 ulimit -S -s unlimited
 ulimit -c unlimited
 
-mkdir -p ${WORKBASE}/${ANA_TIME}/3d-fgat
-cd ${WORKBASE}/${ANA_TIME}/3d-fgat
-pwd
-mkdir -p OUTPUT data_output
+mkdir -p ${RUNBASE}/${ANA_TIME}/3d-fgat
+cd ${RUNBASE}/${ANA_TIME}/3d-fgat
+echo Yongzuo pwd
+
+mkdir -p OUTPUT data_output RESTART
 
 ln -sf ${HOMEBASE}/soca_fix/* .
-ln -sf ${HOMEBASE}/soca_parm/3d-fgat.yml-${ANA_TIME} 3d-fgat.yml
 ln -sf ${HOMEBASE}/obs .
 ln -sf ${HOMEBASE}/forecast_mom6 .
 ln -sf /gpfs/f5/cpchso/scratch/Yongzuo.Li/GDASapp-20250619/global-workflow/sorc/gdas.cd/build/bin/gdas.x .
+
+cp ${HOMEBASE}/soca_parm/3d-fgat.yml-tmp 3d-fgat.yml
+
+###YMDH=2023120712
+YMDH=${ANA_TIME}
+
+TMP_YMDH=${YMDH:0:8}Z${YMDH:8:2}
+TMP_DATE=$(date -ud "$TMP_YMDH")
+
+YMDH00=$(date -ud "$TMP_DATE" +%Y%m%d%H)
+YMDHM1=$(date -ud "$TMP_DATE - 24 hours" +%Y%m%d%H)
+YMDHP1=$(date -ud "$TMP_DATE + 24 hours" +%Y%m%d%H)
+
+echo ${YMDHM1} ${YMDH00} ${YMDHP1}
+
+# create 3d-fgat.yml
+
+#HOMEBASE=/gpfs/f5/cpchso/scratch/Yongzuo.Li/mom6_3d-fgat_rocoto/
+cp ${HOMEBASE}/soca_parm/3d-fgat.yml-tmp 3d-fgat.yml
+
+sed -i "s;YM1;${YMDHM1:0:4};g" 3d-fgat.yml
+sed -i "s;MM1;${YMDHM1:4:2};g" 3d-fgat.yml
+sed -i "s;DM1;${YMDHM1:6:2};g" 3d-fgat.yml
+
+sed -i "s;Y00;${YMDH00:0:4};g" 3d-fgat.yml
+sed -i "s;M00;${YMDH00:4:2};g" 3d-fgat.yml
+sed -i "s;D00;${YMDH00:6:2};g" 3d-fgat.yml
+
+sed -i "s;YP1;${YMDHP1:0:4};g" 3d-fgat.yml
+sed -i "s;MP1;${YMDHP1:4:2};g" 3d-fgat.yml
+sed -i "s;DP1;${YMDHP1:6:2};g" 3d-fgat.yml
 
 # Let srun inherit the SBATCH layout
 export OMP_NUM_THREADS=1
