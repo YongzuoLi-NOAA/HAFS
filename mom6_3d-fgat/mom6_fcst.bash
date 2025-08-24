@@ -17,7 +17,6 @@ echo "ANA_TIME: ${ANA_TIME:-unset}"
 : "${ANA_TIME:?ANA_TIME is not set}"
 
 # ---- Paths (adjust only if your layout differs) ----
-##RUN_DIR=${RUN_DIR:-${RUNBASE}/${ANA_TIME}/mom6_fcst}
 RUN_DIR=${RUN_DIR:-${RUNBASE}/${ANA_TIME}/mom6_fcst}
 
 # refuse to delete if RUN_DIR isn't under your SCRATCH tree
@@ -32,9 +31,6 @@ mkdir -p "$RUN_DIR"
 cd "$RUN_DIR"
 
 echo "RUN_DIR: ${RUN_DIR}"
-
-##mkdir -p ${RUN_DIR}
-##cd "${RUN_DIR}"
 
 echo YongzuoLi-NOAA
 pwd

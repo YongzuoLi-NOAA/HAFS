@@ -23,9 +23,21 @@ module -t list
 ulimit -S -s unlimited
 ulimit -c unlimited
 
-mkdir -p ${RUNBASE}/${ANA_TIME}/3d-fgat
-cd ${RUNBASE}/${ANA_TIME}/3d-fgat
-echo Yongzuo pwd
+# ---- Paths (adjust only if your layout differs) ----
+RUN_DIR=${RUN_DIR:-${RUNBASE}/${ANA_TIME}/3d-fgat}
+
+# refuse to delete if RUN_DIR isn't under your SCRATCH tree
+if [[ "$RUN_DIR" == /gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH/*/3d-fgat ]]; then
+  rm -rf -- "$RUN_DIR"
+else
+  echo "Refusing to rm dangerous RUN_DIR: $RUN_DIR" >&2
+  exit 2
+fi
+
+mkdir -p "$RUN_DIR"
+cd "$RUN_DIR"
+echo YongzuoLI-NOAA
+pwd
 
 mkdir -p OUTPUT data_output RESTART
 
@@ -50,7 +62,6 @@ echo ${YMDHM1} ${YMDH00} ${YMDHP1}
 
 # create 3d-fgat.yml
 
-#HOMEBASE=/gpfs/f5/cpchso/scratch/Yongzuo.Li/mom6_3d-fgat_rocoto/
 cp ${HOMEBASE}/soca_parm/3d-fgat.yml-tmp 3d-fgat.yml
 
 sed -i "s;YM1;${YMDHM1:0:4};g" 3d-fgat.yml
