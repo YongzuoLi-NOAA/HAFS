@@ -10,7 +10,7 @@
 ]>
 <workflow realtime="F" scheduler="slurm">
   <log><cyclestr>&LOG_DIR;/3d-fgat_mom6_fcst.log</cyclestr></log>
-  <cycledef group="group1">202312101200 202312111200 24:00:00</cycledef>
+  <cycledef group="group1">202312081200 202312141200 24:00:00</cycledef>
 
   <!-- TASK: JEDI-SOCA 3DVAR -->
   <task name="3d-fgat" maxtries="1">

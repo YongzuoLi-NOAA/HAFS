@@ -29,16 +29,14 @@ fi
 
 mkdir -p "$RUN_DIR"
 cd "$RUN_DIR"
-
-echo "RUN_DIR: ${RUN_DIR}"
-
 echo YongzuoLi-NOAA
 pwd
 
 CALbump_BASE=/gpfs/f5/cpchso/scratch/JieShun.Zhu/ng-godas/EXPrt.ice/CALbump
-cp -r ${CALbump_BASE}/SCRATCH/${ANA_TIME}/run.fcst/* .
-ls -l
-rm RESTART
+# copy the *contents* of run.fcst into $RUN_DIR, dereferencing all symlinks
+cp -aL ${CALbump_BASE}/SCRATCH/${ANA_TIME}/run.fcst/. "$RUN_DIR"/
+
+rm -rf RESTART
 mkdir -p RESTART
 
 rm rpointer.cpl rpointer.atm ./restart/ice.restart_file
@@ -58,7 +56,6 @@ sed -i "s;DD;${YMD:6:2};g" rpointer.atm
 sed -i "s;YYYY;${YMD:0:4};g" ./restart/ice.restart_file
 sed -i "s;MM;${YMD:4:2};g" ./restart/ice.restart_file
 sed -i "s;DD;${YMD:6:2};g" ./restart/ice.restart_file
-
 
 cp ${HOMEBASE}/exec/fv3_datm_cdeps_intel.exe .
 
