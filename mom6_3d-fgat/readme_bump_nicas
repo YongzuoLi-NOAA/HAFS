@@ -1,0 +1,83 @@
+
+hercules:
+
+scp yongzuo@hercules-login-1.hpc.msstate.edu:/work2/noaa/da/yongzuo/testv2_NHC/parameters_bump_cor_nicas/*.sh .
+
+scp yongzuo@hercules-login-1.hpc.msstate.edu:/work2/noaa/da/yongzuo/testv2_NHC/parameters_bump_cor_nicas/parameters_bump_cor_nicas.yml .
+
+
+##   pwd
+##   /work2/noaa/da/yongzuo/testv2_NHC/parameters_bump_cor_nicas
+##
+## ls *.sh
+## parameters.sh  parameters_bump_cor_nicas.sh  sbatch_4_parameters_bump_cor_nicas.sh
+parameters_bump_cor_nicas.yml-6r600km                                100% 1769    33.3KB/s   00:00
+Yongzuo.Li@gaea57:/gpfs/f5/cpchso/scratch/Yongzuo.Li/parameters_bump_cor_nicas> scp yongzuo@hercules-login-1.hpc.msstate.edu:/work2/noaa/da/yongzuo/testv2_NHC/parameters_bump_cor_nicas/parameters_bump_cor_nicas.yml-6r600km .
+
+/work2/noaa/da/yongzuo/testv2_NHC/parameters_bump_cor_nicas
+(gdasapp) [yongzuo@hercules-login-1 parameters_bump_cor_nicas]$ ls -l ./*.sh
+-rwxr-xr-x 1 yongzuo da  352 Sep 12  2023 ./parameters.sh
+-rwxr-xr-x 1 yongzuo da  351 Dec 14  2023 ./parameters_bump_cor_nicas.sh
+-rwxr-xr-x 1 yongzuo da 2051 Nov 27  2023 ./sbatch_4_parameters_bump_cor_nicas.sh
+(gdasapp) [yongzuo@hercules-login-1 parameters_bump_cor_nicas]$ ls -l parameters_bump_cor_nicas.yml
+-rwxr-xr-x 1 yongzuo da 1810 Dec 26  2023 parameters_bump_cor_nicas.yml
+
+ncdump -v Salt data_generated/parameters_bump_cor_nicas/ocn.parameters_bump_cor_nicas.cor_rh.an.nc |more
+// global attributes:
+                :filename = "data_generated/parameters_bump_cor_nicas/ocn.parameters_bump_cor_nicas.cor
+_rh.an.nc" ;
+data:
+
+ Salt =
+  600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000,
+    600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000,
+    600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000,
+    600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000, 600000,
+    600000, 60000
+$ ncdump -v Salt data_generated/parameters_bump_cor_nicas/ocn.parameters_bump_cor_nicas.cor_rv.an.nc |more
+netcdf ocn.parameters_bump_cor_nicas.cor_rv.an {
+
+// global attributes:
+                :filename = "data_generated/parameters_bump_cor_nicas/ocn.parameters_bump_cor_nicas.cor
+_rv.an.nc" ;
+data:
+
+ Salt =
+  11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+    11, 11, 1
+#!/bin/sh
+
+#SBATCH -o bump_nicas.log
+#SBATCH --job-name bump_nicas
+#SBATCH --account=cpcenso
+#SBATCH --time=08:00:00
+#SBATCH --qos normal
+#SBATCH --partition=batch
+#SBATCH --nodes=48-48
+#SBATCH --tasks-per-node=10
+#SBATCH --cpus-per-task=1
+#SBATCH --exclusive
+#SBATCH --cluster=c5
+
+cd /gpfs/f5/cpchso/scratch/Yongzuo.Li/GDASapp-20250619/global-workflow/sorc/gdas.cd
+module use modulefiles
+module load GDAS/gaeac5.intel
+
+cd /gpfs/f5/cpchso/scratch/Yongzuo.Li/parameters_bump_cor_nicas
+
+rm bump_nicas.out.00* bump_nicas.out
+rm -rf OUTPUT; mkdir -p data_output OUTPUT
+
+ulimit -S -s unlimited
+## limit stacksize unlimited
+
+srun --mem=0 --ntasks=480 --ntasks-per-node=10 --cpus-per-task=1 ./gdas_soca_error_covariance_toolbox.x ./parameters_bump_nicas.yml bump_nicas.out
+
+
+exit
+
+
+
