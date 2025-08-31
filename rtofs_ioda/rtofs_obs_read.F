@@ -379,26 +379,29 @@ c     RTOFS binary
       open(30,file='profile_all.txt',status='unknown')
       open(40,file='profile.txt',status='unknown')
 
-!     #################### Profile locations 
+!     # 8/30/2025 Profile locations loop n. ns is total passed obs 
+
       ns=0
       do n=1, n_in
 
       lat=prf_lat(n)
-      lon=prf_lon(n) 
+      lon=prf_lon(n)
       dtg=prf_dtg(n)
       tqc=prf_tqc(n)
       sqc=prf_sqc(n)
       kk=prf_lt(n)
       sgn=prf_sgn(n)
 
+!     8/30/2025
 !     Time window check. skip this location n if outside
-!      if(dtg.lt.winstart.or.dtg.gt.winend) goto 100
+!     if(dtg.lt.winstart.or.dtg.gt.winend) goto 100
 
       if(tqc.gt.99.0) tqc=99.9 
       if(sqc.gt.99.0) sqc=99.9 
 
-!     ############## Location thinning, skip n if ds<0.2 degree
-      dss=0.5
+!     #### Location thinning, skip n if ds < dss degree
+      dss=0.5       ! every where except special region below
+ 
 !     Strict thinning over Puerto Rico, GoM, Bahama,east of FL. 
 !     remove bad&good. not sure too many warm eddies real or bad
       if(lat.lt.35.0.and.lat.gt.15.0.and.
@@ -415,18 +418,18 @@ c     RTOFS binary
       ds=sqrt(dx*dx+dy*dy)
        if(ds.lt.dss) then
        n_dup=n_dup+1
-       goto 100        ! skip this location n
+       goto 100      ! skip this location n
        endif
       enddo
 
-!     ############## Arrange 2-D array (k,n) to 1-D array (m)
-      allocate (depth(kk))
+!     #### Arrange 2-D array (k,n) to 1-D array (m)
+      allocate (depth(kk))    ! kk is read in from prf_lt(n)
       allocate (temp(kk), temperr(kk), salt(kk), salterr(kk))
 
       mm=0
-      do k=1, kk    ! kk profile level
+      do k=1, kk    ! profile level
 
-!     #################### Salinity Obs QC check
+!     #### Salinity Obs QC check Shastri Paturi ad
       if(prf_sal(k,n).lt.10.0.or.prf_sal(k,n).gt.40.0) then
       write(*,*) 'Bad Salt stnID=',sgn,' n=',n,' mm=',mm
       do m=1,k
@@ -444,9 +447,9 @@ c     RTOFS binary
       salterr(mm)=prf_sal_err(k,n)
       depth(mm)=prf_lvl(k,n)
 
-      enddo         ! kk profile levels
+      enddo         !  profile levels
 
-!     #####################  OHC check
+!     ###  OHC check
 !      write(*,*) 'OHC',ns
 
 !     calculate OHC
@@ -457,66 +460,70 @@ c     RTOFS binary
       ohc=0
       do m=1,mm-1
       if(temp(m).gt.26.0) then
-      ohc=ohc+0.394625*(temp(m)-26.0)*(depth(m+1)-depth(m))      
+        ohc=ohc+0.394625*(temp(m)-26.0)*(depth(m+1)-depth(m)) 
       endif
       enddo
+
 !     set criteria. several OHCs>150 or no OHC>200 for NA
       if(lon.gt.-100.0) then
-      ohc_max=150.0
+        ohc_max=150.0
       else 
-      ohc_max=250.0  ! east Pacific
+        ohc_max=250.0  ! east Pacific
       endif
 
       if(ohc.gt.ohc_max) then
-      write(*,50) dtg,sgn,'LON',lon,'LAT',lat,'OHC',ohc
-      write(*,*) ' mm=',mm,' ',depth(1),' ',temp(1)
-      write(*,*) depth(mm),' ',temp(mm)
-50    format(a12,1x,a7,1x,a3,1x,f6.1,1x,a3,1x,f5.1,1x,a3,1x,f7.1)
-!      do m=1,mm
-!      if(temp(m).gt.26.0) then
-!      write(*,*) 'temp > 26'
-!      write(*,'(5(f9.4,1x))') lat,lon,temp(m),salt(m),depth(m)
-!      endif
-!      enddo
-      deallocate (depth, temp, temperr, salt, salterr)
-      goto 100       ! skip this location n
+        write(*,50) dtg,sgn,'LON',lon,'LAT',lat,'OHC',ohc
+        write(*,*) ' mm=',mm,' ',depth(1),' ',temp(1)
+        write(*,*) depth(mm),' ',temp(mm)
+50      format(a12,1x,a7,1x,a3,1x,f6.1,1x,a3,1x,f5.1,1x,a3,1x,f7.1)
+!       do m=1,mm
+!       if(temp(m).gt.26.0) then
+!       write(*,*) 'temp > 26'
+!       write(*,'(5(f9.4,1x))') lat,lon,temp(m),salt(m),depth(m)
+!       endif
+!       enddo
+        deallocate (depth, temp, temperr, salt, salterr)
+        goto 100       ! skip this location n
       endif         
 
       write(*,*) 'Write ID=',sgn,' n=',n,' mm=',mm,' kk=',kk
-!     ############## write text for ioda NETCDF
+!     #### write text for ioda NETCDF
 !     All profile vertical levels profile_all.txt
+
       do m=1,mm
-      write(30,25) dtg,lat,lon,temp(m),temperr(m),tqc,
+        write(30,25) dtg,lat,lon,temp(m),temperr(m),tqc,
      6             salt(m),salterr(m),sqc,depth(m)
       enddo
 
 !     Vertical thinning, otherwise 3D-FGAT crashed with "Out of memory"
-!     1st top profile level. profile.txt
- 
+
+!     (1) 1st profile level at surface. profile.txt
       write(40,25) dtg,lat,lon,temp(1),temperr(1),tqc,
      6             salt(1),salterr(1),sqc,depth(1)
 
-!     levels contingent on MOM6 layers
-
+!     (2) levels immediately below corresponding MOM6 layers
       ma=2
-!     ------------------------ MOM6 z -------------------------------
-      do z=1,layer  ! z loop  
-!     This MOM6 depth below profile bottom mm. Exit to write prof mm
-      if(layerz(z).ge.depth(mm)) goto 300 
-!     ------------------------ profile m -------------------------------
-      do m=ma,mm
-      if(layerz(z).le.depth(m+1).and.layerz(z).ge.depth(m)) then
-      write(40,25) dtg,lat,lon,temp(m),temperr(m),tqc,
+!     ---------------- MOM6 layer(z) loop
+      do z=1,layer  ! MOM6 Layer loop 
+!       This MOM6 depth below profile bottom mm. Finish profile
+        if(layerz(z).ge.depth(mm)) goto 300 
+
+!     ------------------------ profile m -----------------------------
+        do m=ma,mm
+          if(layerz(z).le.depth(m+1).and.layerz(z).ge.depth(m)) then
+            write(40,25) dtg,lat,lon,temp(m),temperr(m),tqc,
      6             salt(m),salterr(m),sqc,depth(m)
-      ma=m+1        ! z will look for from on m+1 prof lvl
-      goto 200      ! m<z<m+1
-      endif
-      enddo         ! m=ma,mm
-!     ------------------------ profile m -------------------------------
+            ma=m+1        ! z will look for from on m+1 prof lvl
+            goto 200      ! m<z<m+1
+          endif
+        enddo         ! m=ma,mm
+!     ------------------------ profile m -----------------------------
+
 200   continue 
-      enddo         ! z loop 
+      enddo         ! MOM6 Layer (z) loop 
 !     ------------------------ MOM6 z -------------------------------
 
+!     (3) bottom profile lvl
 300   continue ! bottom profile lvl
       write(40,25) dtg,lat,lon,temp(mm),temperr(mm),tqc,
      6             salt(mm),salterr(mm),sqc,depth(mm)
@@ -528,14 +535,15 @@ c     RTOFS binary
       lonn(ns)=lon
 
 100   continue   ! come to this location
-      enddo      ! i=1, n_in
+      enddo      ! i=1, n_in Profile Locations
 
       print*,'TOTAL PROFILE ns=',ns
 
 25    format(a12,1x,2(f8.3,1x),6(1x,f6.3),1x,f6.1)
       close(30)
       close(40)
-!     ############## finish profile locations
+
+!     #### Finish Profile Locations
 
       return
       end
