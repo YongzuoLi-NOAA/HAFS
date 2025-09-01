@@ -81,5 +81,33 @@ export OMP_NUM_THREADS=1
 srun --export=ALL --cpu-bind=cores ./gdas.x soca variational ./3d-fgat.yml 2>&1 \
   | grep -v 'CRAYBLAS_WARNING' | tee 3d-fgat.out
 
+# (3) update MOM.res.nc with analysis Temp, Salt, & ave_ssh for mom6_fcst task
+
+# copy 3d-fgat first guess & analysis output
+# data_output=${RUNBASE}/${ANA_TIME}/3d-fgat/data_output
+#RUN_DIR=${RUN_DIR:-${RUNBASE}/${ANA_TIME}/mom6_fcst}
+#cp -aL ${data_output}/ocn.3dvarfgat_pseudo.an.${YMD:0:4}-${YMD:4:2}-${YMD:6:2}T12:00:00Z.nc ocn.ana.nc
+cp -aL data_output/ocn.3dvarfgat_pseudo.an.${YMDH00:0:4}-${YMDH00:4:2}-${YMDH00:6:2}T12:00:00Z.nc ocn.ana.nc
+#MOMres_input=${RUNBASE}/${ANA_TIME}/3d-fgat/forecast_mom6
+#cp -aL ${MOMres_input}/MOM.res.${ANA_TIME}.nc MOM.res.nc
+cp -aL forecast_mom6/MOM.res.${ANA_TIME}.nc MOM.res.nc
+
+# (1) rename variables and dimensions of (3d-fgat task) analysis model grid data
+
+ncks -A -v Temp,Salt,ave_ssh ./ocn.ana.nc ./TS3D_SSH.nc
+ncrename -d zaxis_1,Layer -d yaxis_1,lath -d xaxis_1,lonh ./TS3D_SSH.nc
+ncrename -v zaxis_1,Layer -v yaxis_1,lath -v xaxis_1,lonh ./TS3D_SSH.nc
+
+# (2) update first guess (forecast_mom6) MOM.res.nc with analysis
+#     Temp,Salt,ave_ssh for forecast (mom6_fcst task) IC (MOM.res.nc)
+
+ncks -A -v Time,Layer,lath,lonh ./MOM.res.nc ./TS3D_SSH.nc    # replace dim to be consistent
+ncks -A -v Time,Temp,Salt,ave_ssh ./TS3D_SSH.nc ./MOM.res.nc  # update T, S, SSH from 3DVAR
+
+#rm ./RESTART_IN/MOM.res.nc
+mv ./MOM.res.nc ./RESTART/MOM.res.nc
+
+# Finish updating MOM.res.nc
+
 echo "3D-FGAT job finished at $(date)"
 
