@@ -1,0 +1,15 @@
+
+8/30/2025
+Yongzuo.Li@gaea52:/gpfs/f5/cpchso/scratch/Yongzuo.Li/RTOFS2IODA_ObsQC> ./rtofs_obs2iodav3_24h_raw.sh >log.20231201-1214
+
+
+cd /gpfs/f5/cpchso/scratch/Yongzuo.Li/GDASapp-20250619/global-workflow/sorc/gdas.cd
+module use modulefiles
+module load GDAS/gaeac5.intel
+
+export PYTHONPATH=$PYTHONPATH:/gpfs/f5/cpchso/scratch/Yongzuo.Li/GDASapp-20250619/global-workflow/sorc/gdas.cd/build/lib/python3.10
+
+./rtofs_ascii2iodav3.py -i profile.txt -v waterTemperature -o waterT.nc
+
+ls /gpfs/f5/cpchso/scratch/Yongzuo.Li/GDASapp-20250619/global-workflow/sorc/gdas.cd/build/bin/glider2ioda.py
+
