@@ -1,0 +1,139 @@
+# common filters used later on. 
+_: &land_mask
+  filter: Domain Check
+  where:
+  - variable: {name: GeoVaLs/sea_area_fraction}
+    minvalue: 0.5
+
+cost function:
+  cost type: 3D-FGAT
+  time window:
+    begin: &date_begin 2023-12-09T12:00:00Z
+    length: P2D
+  analysis variables: &soca_an_vars
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  geometry: &geom
+    geom_grid_file: ./soca_gridspec.nc
+    mom6_input_nml: ./input.nml
+    fields metadata: ./fields_metadata.yml
+
+  model:
+    name: PseudoModel
+    tstep: P1D
+    _state : &state
+      basename: ./forecast_mom6/
+      read_from_file: 1
+    states:
+    - date: 2023-12-10T12:00:00Z
+      ocn_filename: MOM.res.2023121012.nc
+      << : *state
+    - date: 2023-12-11T12:00:00Z
+      ocn_filename: MOM.res.2023121112.nc
+      << : *state
+
+  background:
+    read_from_file: 1
+    basename: ./forecast_mom6/
+    ocn_filename: MOM.res.2023120912.nc
+    date: &bkg_date 2023-12-09T12:00:00Z
+    state variables:
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - sea_water_cell_thickness
+    - ocean_mixed_layer_thickness
+    - sea_water_depth
+
+  background error:
+    covariance model: SABER
+    saber central block:
+      saber block name: diffusion
+      read:
+        groups:
+        - variables:
+          - sea_water_potential_temperature
+          - sea_water_salinity
+          - sea_surface_height_above_geoid
+          horizontal:
+            filepath: ./parameters_diffusion/diffusion_cor1_hz
+          vertical:
+            levels: 75
+            filepath: ./parameters_diffusion/diffusion_cor1_vt
+
+    linear variable change:
+      input variables: *soca_an_vars
+      output variables: *soca_an_vars
+      linear variable changes:
+
+      - linear variable change name: BalanceSOCA
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 10
+        ksshts:
+          nlayers: 10
+
+  observations:
+    observers:
+    - obs space:
+        name: InsituTemperature
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_output/prof_T_2023121012.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: obs/prof_insitu_2023121012.nc
+        simulated variables: [waterTemperature]
+      obs operator:
+        name: InsituTemperature
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Background Check
+        threshold: 5
+
+    - obs space:
+        name: InsituSalinity
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: data_output/prof_S_2023121012.nc
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: obs/prof_insitu_2023121012.nc
+        simulated variables: [salinity]
+      obs operator:
+        name: VertInterp
+        observation alias file: ./obsop_name_map.yml
+        vertical coordinate: sea_water_depth
+        observation vertical coordinate: depth
+        interpolation method: linear
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - *land_mask
+      - filter: Background Check
+        threshold: 5
+
+variational:
+  minimizer:
+    algorithm: RPCG
+  iterations:
+  - geometry: *geom
+    ninner: 100
+    gradient norm reduction: 0.0105
+minimizer:
+  algorithm: RPCG
+
+output:
+  datadir: data_output/
+  exp: 3dvarfgat_pseudo
+  type: an
+
