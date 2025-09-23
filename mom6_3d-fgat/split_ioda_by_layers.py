@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import numpy as np
 from netCDF4 import Dataset
+# top of file
+from decimal import Decimal, ROUND_HALF_UP
 
 # --- inputs ---
 INFILE = "prof_T_2023120912.nc"
@@ -24,7 +26,11 @@ def copy_attrs(src_obj, dst_obj, skip=()):
 def subset_and_write(idx, upper_edge_str, src):
     if idx.size == 0:
         return 0
-    outname = f"T_layer_{upper_edge_str}m.nc"
+    # in subset_and_write(), replace the line that builds outname:
+    #outname = f"T_layer_{upper_edge_str}m.nc"
+    #outname = f"T_layer_{upper_edge_str}m.nc"
+    outname = f"T_layer_{depth_tag(upper_edge_str)}m.nc"
+
     with Dataset(outname, "w", format="NETCDF4") as dst:
         # global attrs
         copy_attrs(src, dst)
@@ -76,6 +82,15 @@ def subset_and_write(idx, upper_edge_str, src):
             #    copy_attrs(vsrc, vdst)
             #    vdst[:] = vsrc[idx]
     return nrec
+
+# add helper (anywhere above main())
+def depth_tag(h: float) -> str:
+    """
+    Round to nearest integer meter using HALF_UP
+    and return zero-padded 4-digit string.
+    """
+    rounded = int(Decimal(str(h)).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+    return f"{rounded:04d}"
 
 def main():
     # load layer edges (assumed one line list or whitespace-separated)
