@@ -97,10 +97,12 @@ for c12 in $(gen_cycles_12); do
     echo YONGZUO 1st SLEEP "$SLEEP_SECS"  AAAA
     sleep "$SLEEP_SECS"
 
-    ### rocotorun -w "$XML" -d "$DB"
-    ### rocotorun -w "$XML" -d "$DB" -c "$c12" -v "$VERBOSE" || true
-    ### echo YONGZUO 2nd SLEEP "$SLEEP_SECS" BBBB
-    ### sleep "$SLEEP_SECS"
+    # ChatGPT suggested this line to nudge task from finished to SUCCEEDED
+    # rocotorun -w "$XML" -d "$DB" 
+    # From ChatGPT:
+    # rocotorun -w "$XML" -d "$DB" -c "$c12" -v "$VERBOSE" || true
+    # echo YONGZUO 2nd SLEEP "$SLEEP_SECS" AAAA 
+    # sleep "$SLEEP_SECS" # Yongzuo: sleep until this task is finished
 
     table="$(get_table "$c12")"
 
@@ -125,12 +127,14 @@ for c12 in $(gen_cycles_12); do
       exit 3
     fi
 
-    echo YONGZUO CCCC ${active}
+    echo YONGZUO CCCC active = ${active}
 
     if (( active == 0 )); then
       echo "This cycle $c12 no longer has active tasks. Go to next cycle"
       break
     fi
+
+    # ChatGPT: sleep "$SLEEP_SECS" Yongzuo: Not needed
 
   done  ## running this cycle
 
