@@ -150,20 +150,10 @@ for k in -5 -4 -3 -2 -1 0 1 2 3 4 5; do
   sed -i "s;${TAGS_D[$k]};${DD};g" 3d-fgat.yml
 done
 
-###### --- (B) Replace placeholders (affects background, states, and observers) ---
-######for k in -5 -4 -3 -2 -1 0 1 2 3 4 5; do
-######  d=$(date -ud "${CENTER_DATE} ${k} days" +%Y%m%d)
-######  YY=${d:0:4}; MM=${d:4:2}; DD=${d:6:2}
-######  sed -i "s;${TAGS_Y[$k]};${YY};g" 3d-fgat.yml
-######  sed -i "s;${TAGS_M[$k]};${MM};g" 3d-fgat.yml
-######  sed -i "s;${TAGS_D[$k]};${DD};g" 3d-fgat.yml
-######done
-
-######
 # Check forecast files for model states (YM4..YP5)
 for k in -4 -3 -2 -1 0 1 2 3 4 5; do
   d=$(date -ud "${CENTER_DATE} ${k} days" +%Y%m%d)
-  test -s "forecast_mom6/MOM.res.${d}12.nc" || { echo "Missing forecast_mom6/MOM.res.${d}12.nc" >&2; exit 3; }
+  test -s "forecast_mom6/${d}.120000.MOM.res.nc" || { echo "Missing forecast_mom6/${d}.120000.MOM.res.nc" >&2; exit 3; }
 done
 
 # Check obs files for obs days (YM5..YP5)
@@ -171,7 +161,6 @@ for k in -5 -4 -3 -2 -1 0 1 2 3 4 5; do
   d=$(date -ud "${CENTER_DATE} ${k} days" +%Y%m%d)
   test -s "obs/prof_insitu_${d}12.nc" || { echo "Missing obs/prof_insitu_${d}12.nc" >&2; exit 4; }
 done
-######
 
 # --- Run SOCA 3D-FGAT ---
 export OMP_NUM_THREADS=1
@@ -180,7 +169,7 @@ srun --export=ALL --cpu-bind=cores ./gdas.x soca variational ./3d-fgat.yml 2>&1 
 
 # --- Update MOM.res.nc with analysis T/S/SSH for next forecast initial condition ---
 cp -aL data_output/ocn.3dvarfgat_pseudo.an.${YMDH:0:4}-${YMDH:4:2}-${YMDH:6:2}T12:00:00Z.nc ocn.ana.nc
-cp -aL forecast_mom6/MOM.res.${ANA_TIME}.nc MOM.res.nc
+cp -aL forecast_mom6/${ANA_TIME:0:8}.120000.MOM.res.nc MOM.res.nc
 
 ncks -A -v Temp,Salt,ave_ssh ./ocn.ana.nc ./TS3D_SSH.nc
 ncrename -d zaxis_1,Layer -d yaxis_1,lath -d xaxis_1,lonh ./TS3D_SSH.nc

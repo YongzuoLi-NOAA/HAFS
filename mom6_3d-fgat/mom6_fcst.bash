@@ -27,7 +27,8 @@ RUN_DIR=${RUN_DIR:-${RUNBASE}/${ANA_TIME}/mom6_fcst}
 
 # refuse to delete unless it's under your SCRATCH tree in the expected spot
 if [[ "$RUN_DIR" == /gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH/*/mom6_fcst ]]; then
-  rm -rf -- "$RUN_DIR"
+## KEEP keep rm -rf -- "$RUN_DIR"
+  echo KEEP YONGZUO
 else
   echo "Refusing to rm dangerous RUN_DIR: $RUN_DIR" >&2
   exit 2
@@ -37,14 +38,66 @@ mkdir -p "$RUN_DIR"
 cd "$RUN_DIR"
 echo "PWD=$(pwd)"
 
+### model_configure and datm.stream ###
+YMDH=${ANA_TIME}
+TMP_YMDH=${YMDH:0:8}Z${YMDH:8:2}
+date_YMDH=$(date -ud "$TMP_YMDH")
+
+cp "${HOMEBASE}/mom6_parm/datm.streams-tmp" datm.streams
+YMD00=${YMDH:0:8}
+YMDP1=$(date -ud "$date_YMDH + 1 day" +%Y%m%d)
+YMDP2=$(date -ud "$date_YMDH + 2 day" +%Y%m%d)
+YMDP3=$(date -ud "$date_YMDH + 3 day" +%Y%m%d)
+YMDP4=$(date -ud "$date_YMDH + 4 day" +%Y%m%d)
+YMDP5=$(date -ud "$date_YMDH + 5 day" +%Y%m%d)
+sed -i "s;YMD00;${YMD00};g" datm.streams
+sed -i "s;YMDP1;${YMDP1};g" datm.streams
+sed -i "s;YMDP2;${YMDP2};g" datm.streams
+sed -i "s;YMDP3;${YMDP3};g" datm.streams
+sed -i "s;YMDP4;${YMDP4};g" datm.streams
+sed -i "s;YMDP5;${YMDP5};g" datm.streams
+
+cp "${HOMEBASE}/mom6_parm/model_configure-tmp" model_configure
+YYYY=${YMDH:0:4}
+MM=${YMDH:4:2}
+DD=${YMDH:6:2}
+HH=${YMDH:8:2}
+sed -i "s;YYYY;${YYYY};g" model_configure
+sed -i "s;MM;${MM};g" model_configure
+sed -i "s;DD;${DD};g" model_configure
+sed -i "s;HH;${HH};g" model_configure
+
+ cp -p ${RUNBASE}/${YMD00}12/mom6_fcst/DATM_INPUT/atm.nc atm_${YMD00}.nc-orig
+ cp -p ${RUNBASE}/${YMDP1}12/mom6_fcst/DATM_INPUT/atm.nc atm_${YMDP1}.nc-orig
+ cp -p ${RUNBASE}/${YMDP2}12/mom6_fcst/DATM_INPUT/atm.nc atm_${YMDP2}.nc-orig
+ cp -p ${RUNBASE}/${YMDP3}12/mom6_fcst/DATM_INPUT/atm.nc atm_${YMDP3}.nc-orig
+ cp -p ${RUNBASE}/${YMDP4}12/mom6_fcst/DATM_INPUT/atm.nc atm_${YMDP4}.nc-orig
+ cp -p ${RUNBASE}/${YMDP5}12/mom6_fcst/DATM_INPUT/atm.nc atm_${YMDP5}.nc-orig
+ if [[ -f atm_${YMD00}.nc ]]; then
+   rm atm_*.nc
+ fi
+
+ cp -p           atm_${YMD00}.nc-orig atm_${YMD00}.nc
+ ncks -d time,2, atm_${YMDP1}.nc-orig atm_${YMDP1}.nc
+ ncks -d time,2, atm_${YMDP2}.nc-orig atm_${YMDP2}.nc
+ ncks -d time,2, atm_${YMDP3}.nc-orig atm_${YMDP3}.nc
+ ncks -d time,2, atm_${YMDP4}.nc-orig atm_${YMDP4}.nc
+ ncks -d time,2, atm_${YMDP5}.nc-orig atm_${YMDP5}.nc
+
+### model_configure and datm.stream ###
+
 # ---- stage run directory contents from template ----
-CALbump_BASE=/gpfs/f5/cpchso/scratch/JieShun.Zhu/ng-godas/EXPrt.ice/CALbump
+CALbump_BASE=/gpfs/f5/cpchso/scratch/JieShun.Zhu/ng-godas/EXPrt.ice/CALbump2
 if [[ ! -d ${CALbump_BASE}/SCRATCH/${ANA_TIME}/run.fcst ]]; then
   echo "FATAL: Missing ${CALbump_BASE}/SCRATCH/${ANA_TIME}/run.fcst" >&2
   exit 11
 fi
 # copy *contents* and dereference symlinks
-cp -aL "${CALbump_BASE}/SCRATCH/${ANA_TIME}/run.fcst/." "$RUN_DIR"/
+## KEEP keep cp -aL "${CALbump_BASE}/SCRATCH/${ANA_TIME}/run.fcst/." "$RUN_DIR"/
+export FHMAX=144         # run length in hours
+export FHOUT=24           # archive/output interval (atmos/ocean timing stamps)
+export FHOUT_HF=1        # (optional) high-freq early window
+export FHMAX_HF=24       # (optional) how long to keep high-freq
 
 # fresh restart dirs
 rm -rf RESTART RESTART_IN RESTART_OUT || true
@@ -113,13 +166,17 @@ MOMres_input="${RUNBASE}/${ANA_TIME}/3d-fgat/forecast_mom6"
 # sanity checks
 test -s "${data_output}/ocn.3dvarfgat_pseudo.an.${YMD:0:4}-${YMD:4:2}-${YMD:6:2}T12:00:00Z.nc" \
   || { echo "FATAL: missing ocn.3dvarfgat_pseudo.an.*.nc" >&2; exit 21; }
-test -s "${MOMres_input}/MOM.res.${ANA_TIME}.nc" \
-  || { echo "FATAL: missing ${MOMres_input}/MOM.res.${ANA_TIME}.nc" >&2; exit 22; }
+test -s "${MOMres_input}/${ANA_TIME:0:8}.120000.MOM.res.nc" \
+  || { echo "FATAL: missing ${MOMres_input}/${ANA_TIME:0:8}.120000.MOM.res.nc" >&2; exit 22; }
 
 cp -aL "${data_output}/ocn.3dvarfgat_pseudo.an.${YMD:0:4}-${YMD:4:2}-${YMD:6:2}T12:00:00Z.nc" ocn.ana.nc
-cp -aL "${MOMres_input}/MOM.res.${ANA_TIME}.nc" MOM.res.nc
+cp -aL "${MOMres_input}/${ANA_TIME:0:8}.120000.MOM.res.nc" MOM.res.nc
 
 # (1) prepare T/S/SSH from analysis on model grid
+if [[ -f TS3D_SSH.nc ]]; then
+rm TS3D_SSH.nc
+fi
+
 ncks -A -v Temp,Salt,ave_ssh ./ocn.ana.nc ./TS3D_SSH.nc
 ncrename -d zaxis_1,Layer -d yaxis_1,lath -d xaxis_1,lonh ./TS3D_SSH.nc
 ncrename -v zaxis_1,Layer -v yaxis_1,lath -v xaxis_1,lonh ./TS3D_SSH.nc
@@ -130,7 +187,10 @@ ncks -A -v Time,Temp,Salt,ave_ssh ./TS3D_SSH.nc ./MOM.res.nc
 
 mkdir -p RESTART_IN
 rm -f ./RESTART_IN/MOM.res.nc
-mv ./MOM.res.nc ./RESTART_IN/MOM.res.nc
+
+# ---- NMC-method link rst/MOM.res.nc to extend fcst from 24-h to 48-h ----
+# mv ./MOM.res.nc ./RESTART_IN/MOM.res.nc
+ln -sf ${HOMEBASE}/forecast_mom6/${ANA_TIME:0:8}.120000.MOM.res.nc ./RESTART_IN/MOM.res.nc
 
 # ---- launch UFS ----
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
@@ -154,6 +214,10 @@ fi
 mkdir -p ../logs
 module -t list > "../logs/module_stack.mom6_fcst.${ANA_TIME}.txt" || true
 ldd ./fv3_datm_cdeps_intel.exe | sort > "../logs/ldd.fv3_datm.${ANA_TIME}.txt" || true
+
+# ---- NMC-method, no link here ----
+# cd /gpfs/f5/cpchso/scratch/Yongzuo.Li/mom6_3d-fgat_rocoto/forecast_mom6
+# ln -sf ${RUNBASE}/${ANA_TIME}/mom6_fcst/RESTART/* .
 
 echo "=== MOM6 forecast end: $(date)"
 

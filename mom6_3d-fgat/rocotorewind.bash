@@ -1,23 +1,17 @@
 #!/bin/bash -l
 
-echo "Yongzuo Li"
+rocotorun  -w test_soca_workflow.xml -d test_soca_workflow.db
+rocotorun  -w test_soca_workflow.xml -d test_soca_workflow.db -c 202312311200 -v 10
+rocotoboot
+rocotoboot -w test_soca_workflow.xml -d test_soca_workflow.db -c 202312311200 -t mom6_fcst
+rocotorewind
+rocotorewind -w test_soca_workflow.xml -d test_soca_workflow.db -c 202312311200 -t mom6_fcst
 
-rm ../logs/*
-
-rocotorewind -w test_soca_workflow.xml -d test_soca_workflow.db -c 202312131200 -t mom6_forecast
-rocotorun  -w test_soca_workflow.xml -d test_soca_workflow.db -c 202312131200 -v 10
-rocotostat -w test_soca_workflow.xml -d test_soca_workflow.db
 squeue -l -u $USER
 
+rocotostat -w test_soca_workflow.xml -d test_soca_workflow.db
+
 ls -l ../logs/*
-more ../logs/mom6_forecast_xml_2023121312.err
-more ../logs/mom6_forecast_xml_2023121312.out
-
-exit
-
-rocotorewind -w test_soca_workflow.xml -d test_soca_workflow.db -c 202312131200 -t 3d-fgat
-rocotorewind -w test_soca_workflow.xml -d test_soca_workflow.db -c 202312131200 -t mom6_forecast
 
 ls -l /gpfs/f5/cpchso/scratch/Yongzuo.Li/SCRATCH/
-
 

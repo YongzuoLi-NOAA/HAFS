@@ -1,0 +1,16 @@
+#!/bin/bash -l
+#SBATCH -A cpcenso
+#SBATCH -p batch
+#SBATCH --clusters=c5
+#SBATCH -t 8:00:00
+#SBATCH -J rocoto_driver
+#SBATCH -N 1
+#SBATCH -o driver.%j.out
+#SBATCH -e driver.%j.err
+
+set -euo pipefail
+
+cd /gpfs/f5/cpchso/scratch/Yongzuo.Li/mom6_3d-fgat_rocoto/rocoto
+./run_rocoto_range.bash 202412271200 202412311200 24 \
+  test_soca_workflow.xml test_soca_workflow.db
+
